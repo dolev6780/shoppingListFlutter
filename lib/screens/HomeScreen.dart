@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shoppinglist/screens/CreateListScreen.dart';
 import 'package:shoppinglist/screens/SignInScreen.dart';
+import 'package:shoppinglist/components/ListTitles.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -58,6 +59,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         _auth.signOut();
                         _email = "";
                       });
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext context) =>
+                                const HomeScreen(),
+                          ));
                     },
                     child: const Text("התנתקות"))
               ],
@@ -65,7 +72,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: Container(),
+      body: Container(
+        child: const ListTitles(),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
