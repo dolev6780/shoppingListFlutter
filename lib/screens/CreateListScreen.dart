@@ -64,10 +64,18 @@ class _CreateListScreenState extends State<CreateListScreen> {
       for (var i = 0; i < shopList.length; i++) {
         data.add({'item': shopList[i].item, 'qty': shopList[i].qty});
       }
+      var day = DateTime.now().day < 10
+          ? "0${DateTime.now().day}"
+          : "${DateTime.now().day}";
+      var month = DateTime.now().month < 10
+          ? "0${DateTime.now().month}"
+          : "${DateTime.now().month}";
+      var date = "$day/$month/${DateTime.now().year}";
+
       final docData = {
         "title": listTitleController.text,
         "list": data,
-        "date": DateTime.now().toString()
+        "date": date
       };
       if (_email?.isNotEmpty == true) {
         if (shopList.isNotEmpty) {

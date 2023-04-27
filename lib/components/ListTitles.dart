@@ -12,7 +12,7 @@ class ListTitles extends StatefulWidget {
 class ListTitlesState extends State<ListTitles> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   User? _user;
-  List<String> shopListTitles = [];
+  List shopListTitles = [{}];
 
   @override
   void initState() {
@@ -24,16 +24,16 @@ class ListTitlesState extends State<ListTitles> {
         .collection('shoplists');
     if (!(_user?.uid == null)) {
       subCollectionRef.snapshots().listen((querySnapshot) {
-        List<String> newShopListTitles = [];
+        List newShopListTitles = [];
         querySnapshot.docs.forEach((doc) {
-          newShopListTitles.add(doc.data()['title']);
+          newShopListTitles
+              .add({'title': doc.data()['title'], 'date': doc.data()['date']});
         });
         setState(() {
           shopListTitles = newShopListTitles;
         });
       });
     } else {
-      print(_user?.uid);
       shopListTitles = [];
     }
   }
@@ -44,7 +44,31 @@ class ListTitlesState extends State<ListTitles> {
       itemCount: shopListTitles.length,
       itemBuilder: (context, index) {
         return ListTile(
-          title: Text(shopListTitles[index]),
+          contentPadding: EdgeInsets.all(10),
+          title: Container(
+            height: 60,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue[800],
+                  elevation: 6,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20))),
+              onPressed: () {},
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  SizedBox(width: 10),
+                  Text(shopListTitles[index]['date'].toString(),
+                      style: TextStyle(fontSize: 16)),
+                  Spacer(),
+                  Text(shopListTitles[index]['title'].toString(),
+                      style: TextStyle(fontSize: 24)),
+                  SizedBox(width: 10),
+                ],
+              ),
+            ),
+          ),
         );
       },
     );
