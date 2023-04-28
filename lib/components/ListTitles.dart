@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ListTitles extends StatefulWidget {
-  const ListTitles({super.key});
+  const ListTitles({Key? key}) : super(key: key);
 
   @override
   State<ListTitles> createState() => ListTitlesState();
@@ -12,7 +12,8 @@ class ListTitles extends StatefulWidget {
 class ListTitlesState extends State<ListTitles> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   User? _user;
-  List shopListTitles = [{}];
+  List<Map<String, dynamic>> shopListTitles = [];
+  List<bool> _isOpen = [];
 
   @override
   void initState() {
@@ -24,13 +25,15 @@ class ListTitlesState extends State<ListTitles> {
         .collection('shoplists');
     if (!(_user?.uid == null)) {
       subCollectionRef.snapshots().listen((querySnapshot) {
-        List newShopListTitles = [];
+        List<Map<String, dynamic>> newShopListTitles = [];
         querySnapshot.docs.forEach((doc) {
           newShopListTitles
               .add({'title': doc.data()['title'], 'date': doc.data()['date']});
         });
         setState(() {
           shopListTitles = newShopListTitles;
+          _isOpen =
+              List<bool>.generate(shopListTitles.length, (index) => false);
         });
       });
     } else {
@@ -40,37 +43,47 @@ class ListTitlesState extends State<ListTitles> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: shopListTitles.length,
-      itemBuilder: (context, index) {
-        return ListTile(
-          contentPadding: EdgeInsets.all(10),
-          title: Container(
-            height: 60,
-            child: TextButton(
-              style: TextButton.styleFrom(
-                  backgroundColor: Colors.blue[800],
-                  elevation: 6,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20))),
-              onPressed: () {},
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  SizedBox(width: 10),
-                  Text(shopListTitles[index]['date'].toString(),
-                      style: TextStyle(fontSize: 16)),
-                  Spacer(),
-                  Text(shopListTitles[index]['title'].toString(),
-                      style: TextStyle(fontSize: 24)),
-                  SizedBox(width: 10),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+    return SingleChildScrollView(
+      child: Container(
+        padding: EdgeInsets.all(16.0),
+        child: shopListTitles.isNotEmpty
+            ? ExpansionPanelList(
+                expansionCallback: (int index, bool isExpanded) {
+                  setState(() {
+                    _isOpen[index] = !isExpanded;
+                  });
+                },
+                children: shopListTitles.map<ExpansionPanel>((data) {
+                  int index = shopListTitles.indexOf(data);
+                  return ExpansionPanel(
+                    headerBuilder: (BuildContext context, bool isExpanded) {
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            _isOpen[index] = !isExpanded;
+                          });
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              SizedBox(width: 16.0),
+                              Text(
+                                data['title'].toString(),
+                                style: TextStyle(fontSize: 18.0),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    body: Text("data"),
+                    isExpanded: _isOpen[index],
+                  );
+                }).toList(),
+              )
+            : SizedBox(),
+      ),
     );
   }
 }
