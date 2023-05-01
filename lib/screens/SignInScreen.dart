@@ -5,7 +5,7 @@ import 'package:shoppinglist/screens/HomeScreen.dart';
 import 'package:shoppinglist/screens/SignUpScreen.dart';
 
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key});
+  const SignInScreen({Key? key}) : super(key: key);
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -23,6 +23,7 @@ class _SignInScreenState extends State<SignInScreen> {
         email: email,
         password: password,
       );
+      print('object');
       Navigator.push(
           context,
           MaterialPageRoute<void>(

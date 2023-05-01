@@ -62,7 +62,11 @@ class _CreateListScreenState extends State<CreateListScreen> {
       final DocumentReference newDocRef =
           collectionRef.doc("${_user?.uid}").collection("shoplists").doc();
       for (var i = 0; i < shopList.length; i++) {
-        data.add({'item': shopList[i].item, 'qty': shopList[i].qty});
+        data.add({
+          'item': shopList[i].item,
+          'qty': shopList[i].qty,
+          'checked': false
+        });
       }
       var day = DateTime.now().day < 10
           ? "0${DateTime.now().day}"

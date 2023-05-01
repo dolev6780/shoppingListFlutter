@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -72,8 +73,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: Container(
-        child: const ListTitles(),
+      body: Column(
+        children: [
+          Container(
+            height: screenHeight - 100,
+            child: const ListTitles(),
+          ),
+          Text(screenHeight.toString())
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
