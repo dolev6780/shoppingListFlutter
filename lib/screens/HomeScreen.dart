@@ -73,14 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: Column(
-        children: [
-          Container(
-            height: screenHeight - 100,
-            child: const ListTitles(),
-          ),
-          Text(screenHeight.toString())
-        ],
+      body: Container(
+        height: screenHeight - 100,
+        child: const ListTitles(),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

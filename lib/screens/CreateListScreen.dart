@@ -125,6 +125,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
                       child: TextButton(
                         onPressed: () {
                           item();
+                          FocusScope.of(context).unfocus();
                         },
                         child: const Text('הוסף'),
                       ),
@@ -148,77 +149,6 @@ class _CreateListScreenState extends State<CreateListScreen> {
                       ),
                     ),
                   ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                          color: Colors.black,
-                          width: 1.0,
-                          style: BorderStyle.solid)),
-                  height: 45,
-                  width: double.infinity,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: const [
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                        Text("data"),
-                        SizedBox(
-                          width: 10,
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
               ),
               Padding(
