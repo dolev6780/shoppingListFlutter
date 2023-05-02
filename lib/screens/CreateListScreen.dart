@@ -79,7 +79,8 @@ class _CreateListScreenState extends State<CreateListScreen> {
       final docData = {
         "title": listTitleController.text,
         "list": data,
-        "date": date
+        "date": date,
+        "finished": false
       };
       if (_email?.isNotEmpty == true) {
         if (shopList.isNotEmpty) {

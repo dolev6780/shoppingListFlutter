@@ -54,6 +54,23 @@ class _TheListScreenState extends State<TheListScreen> {
     }
   }
 
+  Future<void> finishList() async {
+    try {
+      var docRef =
+          FirebaseFirestore.instance.collection('users').doc(widget.uid);
+      var subcollectionRef = docRef.collection('shoplists');
+
+      await subcollectionRef.doc(widget.docId).update({'finished': true});
+      await Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) => const HomeScreen(),
+          ));
+    } catch (e) {
+      print('Error updating subcollection field: $e');
+    }
+  }
+
   void _checkFinishedList() {
     for (var i = 0; i < widget.list.length; i++) {
       if (widget.list[i]['checked'] == false) {
@@ -146,7 +163,9 @@ class _TheListScreenState extends State<TheListScreen> {
       ),
       floatingActionButton: finishedList == true
           ? FloatingActionButton.extended(
-              onPressed: () {},
+              onPressed: () {
+                finishList();
+              },
               label: Text(
                 'סיים רשימה',
                 style: TextStyle(fontWeight: FontWeight.bold),

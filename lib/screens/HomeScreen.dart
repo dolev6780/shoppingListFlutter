@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shoppinglist/screens/CreateListScreen.dart';
+import 'package:shoppinglist/screens/FinishedLists.dart';
 import 'package:shoppinglist/screens/SignInScreen.dart';
 import 'package:shoppinglist/components/ListTitles.dart';
 
@@ -67,7 +68,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const HomeScreen(),
                           ));
                     },
-                    child: const Text("התנתקות"))
+                    child: const Text("התנתקות")),
+                TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext context) =>
+                                const FinishedLists(),
+                          ));
+                    },
+                    child: const Text("הסטוריית רשימות"))
               ],
             ),
           ),

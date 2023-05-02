@@ -28,7 +28,10 @@ class ListTitlesState extends State<ListTitles> {
       subCollectionRef.snapshots().listen((querySnapshot) {
         snapshot = querySnapshot;
         List<Map<String, dynamic>> newShopListTitles = [];
-        querySnapshot.docs.forEach((doc) {
+
+        querySnapshot.docs
+            .where((doc) => doc.data()['finished'] == false)
+            .forEach((doc) {
           newShopListTitles.add({
             'title': doc.data()['title'],
             'date': doc.data()['date'],
