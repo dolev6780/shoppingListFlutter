@@ -16,6 +16,7 @@ class ListTitlesState extends State<ListTitles> {
   List<Map<String, dynamic>> shopListTitles = [];
   List<bool> _isOpen = [];
   late QuerySnapshot snapshot;
+
   @override
   void initState() {
     super.initState();
@@ -35,7 +36,8 @@ class ListTitlesState extends State<ListTitles> {
           newShopListTitles.add({
             'title': doc.data()['title'],
             'date': doc.data()['date'],
-            'list': doc.data()['list']
+            'list': doc.data()['list'],
+            'docId': doc.id // Add the doc id to the map
           });
         });
         setState(() {
@@ -49,8 +51,7 @@ class ListTitlesState extends State<ListTitles> {
     }
   }
 
-  void deleteList(index) {
-    var docId = snapshot.docs[index].id;
+  void deleteList(docId) {
     var subCollectionRef = FirebaseFirestore.instance
         .collection('users')
         .doc("${_user?.uid}")
@@ -68,6 +69,8 @@ class ListTitlesState extends State<ListTitles> {
               itemCount: shopListTitles.length,
               addAutomaticKeepAlives: true,
               itemBuilder: (BuildContext context, int index) {
+                var docId = shopListTitles[index]
+                    ['docId']; // Get the doc id from the map
                 return Column(
                   children: [
                     Container(
@@ -83,7 +86,7 @@ class ListTitlesState extends State<ListTitles> {
                                     TheListScreen(
                                   title: shopListTitles[index]['title'],
                                   list: shopListTitles[index]['list'],
-                                  docId: snapshot.docs[index].id,
+                                  docId: docId,
                                   uid: "${_user?.uid}",
                                 ),
                               ));
@@ -107,7 +110,7 @@ class ListTitlesState extends State<ListTitles> {
                               children: [
                                 IconButton(
                                   onPressed: () {
-                                    deleteList(index);
+                                    deleteList(docId);
                                   },
                                   icon: Icon(Icons.delete,
                                       color: Colors.white, size: 24),

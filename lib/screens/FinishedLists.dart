@@ -73,19 +73,7 @@ class _FinishedListsState extends State<FinishedLists> {
                               color: Colors.blue[400],
                               borderRadius: BorderRadius.circular(20)),
                           child: TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute<void>(
-                                    builder: (BuildContext context) =>
-                                        TheListScreen(
-                                      title: finishedLists[index]['title'],
-                                      list: finishedLists[index]['list'],
-                                      docId: snapshot.docs[index].id,
-                                      uid: "${_user?.uid}",
-                                    ),
-                                  ));
-                            },
+                            onPressed: () {},
                             child: ListTile(
                               title: Text(
                                 finishedLists[index]['title'],

@@ -27,6 +27,7 @@ class _TheListScreenState extends State<TheListScreen> {
     setState(() {
       _checkFinishedList();
     });
+    print(widget.docId);
   }
 
   Future<void> updateSubcollectionField() async {
