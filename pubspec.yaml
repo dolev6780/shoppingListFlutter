@@ -38,6 +38,8 @@ dependencies:
   firebase_core: ^2.10.0
   firebase_auth: ^4.4.2
   cloud_firestore: ^4.5.2
+  share: ^2.0.4
+  searchfield: ^0.8.0
  
 
 dev_dependencies:

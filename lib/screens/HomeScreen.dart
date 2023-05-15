@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shoppinglist/screens/AddConnection.dart';
 import 'package:shoppinglist/screens/CreateListScreen.dart';
 import 'package:shoppinglist/screens/FinishedLists.dart';
 import 'package:shoppinglist/screens/SignInScreen.dart';
@@ -78,7 +79,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 const FinishedLists(),
                           ));
                     },
-                    child: const Text("הסטוריית רשימות"))
+                    child: const Text("הסטוריית רשימות")),
+                TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext context) => AddConnection(),
+                          ));
+                    },
+                    child: const Text("הוסף איש קשר"))
               ],
             ),
           ),

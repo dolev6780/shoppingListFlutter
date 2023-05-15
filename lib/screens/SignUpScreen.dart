@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shoppinglist/screens/HomeScreen.dart';
@@ -24,6 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email: email,
         password: password,
       );
+      await createUserProfileDoc();
       await Navigator.push(
           context,
           MaterialPageRoute<void>(
@@ -35,6 +37,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
       } else if (e.code == 'email-already-in-use') {
         showAlert(context, "משתמש כבר רשום");
       }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> createUserProfileDoc() async {
+    try {
+      String? user = _auth.currentUser?.uid;
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final CollectionReference collectionRef = firestore.collection("users");
+      final DocumentReference newDocRef = collectionRef.doc(user);
+      final docData = {
+        "email": email,
+        "connections": [],
+        "sendconnections": [],
+        "connectionrequests": []
+      };
+      await newDocRef.set(docData);
+      print(user);
     } catch (e) {
       print(e);
     }
