@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shoppinglist/screens/AddConnection.dart';
 import 'package:shoppinglist/screens/CreateListScreen.dart';
 import 'package:shoppinglist/screens/FinishedLists.dart';
+import 'package:shoppinglist/screens/MyConnectios.dart';
 import 'package:shoppinglist/screens/SignInScreen.dart';
 import 'package:shoppinglist/components/ListTitles.dart';
 
@@ -85,10 +86,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                           context,
                           MaterialPageRoute<void>(
-                            builder: (BuildContext context) => AddConnection(),
+                            builder: (BuildContext context) => MyConnections(),
                           ));
                     },
-                    child: const Text("הוסף איש קשר"))
+                    child: const Text("אנשי הקשר שלי"))
               ],
             ),
           ),

@@ -14,12 +14,13 @@ class _AddConnectionState extends State<AddConnection> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   List<Map<String, dynamic>> users = [];
-  String? _userEmail;
+  String? _userEmail = "";
   final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _userEmail = "";
   }
 
   Future<List<Map<String, dynamic>>> getUsers() async {
@@ -33,6 +34,43 @@ class _AddConnectionState extends State<AddConnection> {
     });
     print(users);
     return users;
+  }
+
+  void searchUser(email) {
+    for (var i = 0; i < users.length; i++) {
+      if (email == users[i]['email']) {
+        setState(() {
+          _userEmail = users[i]['email'];
+        });
+        break;
+      }
+    }
+    if (_userEmail == "") {
+      setState(() {
+        _userEmail = "email is not valid";
+      });
+    }
+  }
+
+  void sendConnection() async {
+    List data = [];
+    QuerySnapshot<Map<String, dynamic>> snapshot =
+        await _firestore.collection('users').get();
+    snapshot.docs.forEach((doc) {
+      if (_userEmail == doc.data()['email']) {
+        data = [
+          {'user': _userEmail, 'id': doc.id}
+        ];
+      }
+    });
+    var saveDocRef = _firestore.collection('users').doc(_auth.currentUser?.uid);
+    await saveDocRef.update({'sendconnections': data});
+    var sendDocRef = _firestore.collection('users').doc(data[0]['id']);
+    await sendDocRef.update({
+      'connectionsrequests': [
+        {'user': _auth.currentUser?.email, 'id': _auth.currentUser?.uid}
+      ]
+    });
   }
 
   @override
@@ -74,7 +112,41 @@ class _AddConnectionState extends State<AddConnection> {
                           ),
                         ),
                       ),
-                      ElevatedButton(onPressed: () {}, child: Text("חפש"))
+                      ElevatedButton(
+                          onPressed: () {
+                            searchUser(searchController.text);
+                          },
+                          child: Text("חפש")),
+                      _userEmail!.isNotEmpty
+                          ? _userEmail == "email is not valid"
+                              ? Text(_userEmail.toString())
+                              : Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      ElevatedButton(
+                                          onPressed: () {
+                                            sendConnection();
+                                          },
+                                          child: Text("שלח בקשה")),
+                                      Row(
+                                        children: [
+                                          Text(_userEmail.toString()),
+                                          SizedBox(
+                                            width: 10.0,
+                                          ),
+                                          CircleAvatar(
+                                              child: Text(_userEmail!
+                                                  .substring(0, 1)
+                                                  .toUpperCase()))
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                )
+                          : Text(""),
                     ],
                   )
                 : Text('No users found');
