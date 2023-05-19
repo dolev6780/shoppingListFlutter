@@ -14,35 +14,109 @@ class _AddConnectionState extends State<AddConnection> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   List<Map<String, dynamic>> users = [];
+  List sendConnections = [];
+  List connectionRequests = [];
+  List userConnectionRequests = [];
   String? _userEmail = "";
+  bool alreadySendRequest = false;
   final TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _userEmail = "";
   }
 
   Future<List<Map<String, dynamic>>> getUsers() async {
     users = [];
-    QuerySnapshot<Map<String, dynamic>> snapshot =
-        await _firestore.collection('users').get();
-    snapshot.docs.forEach((doc) {
-      if (_auth.currentUser?.uid != doc.id) {
-        users.add({"email": doc.data()['email']});
-      }
-    });
-    print(users);
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot =
+          await _firestore.collection('users').get();
+      snapshot.docs.forEach((doc) {
+        if (_auth.currentUser?.uid != doc.id) {
+          users.add({"email": doc.data()['email']});
+        }
+      });
+    } catch (e) {
+      // Handle the error appropriately, e.g., show an error message
+      print('Error fetching users: $e');
+    }
     return users;
   }
 
-  void searchUser(email) {
+  Future<List> getUserSendConnections() async {
+    sendConnections = [];
+    try {
+      var docRef = _firestore.collection('users').doc(_auth.currentUser?.uid);
+      await docRef.get().then((doc) {
+        sendConnections.addAll(doc.data()?['sendconnections']);
+      });
+    } catch (e) {
+      print('Error fetching sendconnections: $e');
+    }
+    return sendConnections;
+  }
+
+  Future<List> getUserConnectionRequests() async {
+    userConnectionRequests = [];
+    try {
+      var docRef = _firestore.collection('users').doc(_auth.currentUser?.uid);
+      await docRef.get().then((doc) {
+        userConnectionRequests.addAll(doc.data()?['connectionsrequests']);
+      });
+    } catch (e) {
+      print('Error fetching userConnectionRequests: $e');
+    }
+    return userConnectionRequests;
+  }
+
+  Future<List> getUserToSendConnectionRequests(id) async {
+    connectionRequests = [];
+    try {
+      var docRef = _firestore.collection('users').doc(id);
+      await docRef.get().then((doc) {
+        connectionRequests.addAll(doc.data()?['connectionsrequests']);
+      });
+    } catch (e) {
+      print('Error fetching connectionsrequests: $e');
+    }
+    return connectionRequests;
+  }
+
+  void searchUser(email) async {
     for (var i = 0; i < users.length; i++) {
       if (email == users[i]['email']) {
         setState(() {
           _userEmail = users[i]['email'];
         });
         break;
+      }
+    }
+
+    await getUserSendConnections();
+    for (var i = 0; i < sendConnections.length; i++) {
+      if (email == sendConnections[i]['user']) {
+        setState(() {
+          alreadySendRequest = true;
+        });
+        break;
+      } else {
+        setState(() {
+          alreadySendRequest = false;
+        });
+      }
+    }
+
+    await getUserConnectionRequests();
+    for (var i = 0; i < userConnectionRequests.length; i++) {
+      if (email == userConnectionRequests[i]['user']) {
+        setState(() {
+          alreadySendRequest = true;
+        });
+        break;
+      } else {
+        setState(() {
+          alreadySendRequest = false;
+        });
       }
     }
     if (_userEmail == "") {
@@ -52,25 +126,44 @@ class _AddConnectionState extends State<AddConnection> {
     }
   }
 
-  void sendConnection() async {
-    List data = [];
-    QuerySnapshot<Map<String, dynamic>> snapshot =
-        await _firestore.collection('users').get();
-    snapshot.docs.forEach((doc) {
-      if (_userEmail == doc.data()['email']) {
-        data = [
-          {'user': _userEmail, 'id': doc.id}
-        ];
-      }
-    });
-    var saveDocRef = _firestore.collection('users').doc(_auth.currentUser?.uid);
-    await saveDocRef.update({'sendconnections': data});
-    var sendDocRef = _firestore.collection('users').doc(data[0]['id']);
-    await sendDocRef.update({
-      'connectionsrequests': [
-        {'user': _auth.currentUser?.email, 'id': _auth.currentUser?.uid}
-      ]
-    });
+  Future<void> sendConnection() async {
+    Map<String, dynamic> userToSendData = {};
+    Map<String, dynamic> userData = {
+      'user': _auth.currentUser?.email,
+      'id': _auth.currentUser?.uid
+    };
+
+    try {
+      QuerySnapshot<Map<String, dynamic>> snapshot =
+          await _firestore.collection('users').get();
+      snapshot.docs.forEach((doc) async {
+        if (_userEmail == doc.data()['email']) {
+          userToSendData = {'user': _userEmail, 'id': doc.id};
+          sendConnections.add(userToSendData);
+          await getUserToSendConnectionRequests(userToSendData['id']);
+          connectionRequests.add(userData);
+        }
+      });
+
+      print('send');
+      print(sendConnections);
+
+      var saveDocRef =
+          _firestore.collection('users').doc(_auth.currentUser?.uid);
+      await saveDocRef.update({'sendconnections': sendConnections});
+
+      var sendDocRef = _firestore.collection('users').doc(userToSendData['id']);
+      print('send2');
+      print(connectionRequests);
+      await sendDocRef.update({'connectionsrequests': connectionRequests});
+
+      setState(() {
+        alreadySendRequest = true;
+      });
+    } catch (e) {
+      // Handle the error appropriately, e.g., show an error message
+      print('Error sending connection: $e');
+    }
   }
 
   @override
@@ -127,8 +220,17 @@ class _AddConnectionState extends State<AddConnection> {
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       ElevatedButton(
+                                          style: ButtonStyle(
+                                            backgroundColor: alreadySendRequest
+                                                ? MaterialStateProperty.all<
+                                                    Color>(Colors.grey)
+                                                : MaterialStateProperty.all<
+                                                    Color>(Colors.blue),
+                                          ),
                                           onPressed: () {
-                                            sendConnection();
+                                            alreadySendRequest
+                                                ? null
+                                                : sendConnection();
                                           },
                                           child: Text("שלח בקשה")),
                                       Row(
