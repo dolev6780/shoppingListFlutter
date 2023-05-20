@@ -1,24 +1,32 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:searchfield/searchfield.dart';
 
-class AddConnection extends StatefulWidget {
-  const AddConnection({Key? key}) : super(key: key);
+class AddConnectionScreen extends StatefulWidget {
+  const AddConnectionScreen({Key? key}) : super(key: key);
 
   @override
-  _AddConnectionState createState() => _AddConnectionState();
+  State<AddConnectionScreen> createState() => _AddConnectionScreenState();
 }
 
-class _AddConnectionState extends State<AddConnection> {
+class _AddConnectionScreenState extends State<AddConnectionScreen> {
+  ////// still need to refresh screen for the data will update in other screens///
+////// instead disable button when request already sent myabe change to undo button///
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // initial lists for current user and user to send request////
   List<Map<String, dynamic>> users = [];
   List sendConnections = [];
-  List connectionRequests = [];
+  List userToSendConnectionRequests = [];
   List userConnectionRequests = [];
+
+  //user to send email indicator ////
   String? _userEmail = "";
+  /* if there is already send request from both side the
+   flag pop and disable the button to send request*/
   bool alreadySendRequest = false;
+
   final TextEditingController searchController = TextEditingController();
 
   @override
@@ -26,29 +34,34 @@ class _AddConnectionState extends State<AddConnection> {
     super.initState();
   }
 
+//future function to get all users for search purpose////
   Future<List<Map<String, dynamic>>> getUsers() async {
     users = [];
     try {
       QuerySnapshot<Map<String, dynamic>> snapshot =
           await _firestore.collection('users').get();
       snapshot.docs.forEach((doc) {
-        if (_auth.currentUser?.uid != doc.id) {
-          users.add({"email": doc.data()['email']});
+        if (doc.exists) {
+          if (_auth.currentUser?.uid != doc.id) {
+            users.add({"email": doc.data()['email']});
+          }
         }
       });
     } catch (e) {
-      // Handle the error appropriately, e.g., show an error message
       print('Error fetching users: $e');
     }
     return users;
   }
 
+  // future function to get the current user send connections list from database////
   Future<List> getUserSendConnections() async {
     sendConnections = [];
     try {
       var docRef = _firestore.collection('users').doc(_auth.currentUser?.uid);
       await docRef.get().then((doc) {
-        sendConnections.addAll(doc.data()?['sendconnections']);
+        if (doc.exists) {
+          sendConnections.addAll(doc.data()?['sendconnections']);
+        }
       });
     } catch (e) {
       print('Error fetching sendconnections: $e');
@@ -56,12 +69,15 @@ class _AddConnectionState extends State<AddConnection> {
     return sendConnections;
   }
 
+// future function to get the current user connection requests list from database////
   Future<List> getUserConnectionRequests() async {
     userConnectionRequests = [];
     try {
       var docRef = _firestore.collection('users').doc(_auth.currentUser?.uid);
       await docRef.get().then((doc) {
-        userConnectionRequests.addAll(doc.data()?['connectionsrequests']);
+        if (doc.exists) {
+          userConnectionRequests.addAll(doc.data()?['connectionsrequests']);
+        }
       });
     } catch (e) {
       print('Error fetching userConnectionRequests: $e');
@@ -69,36 +85,51 @@ class _AddConnectionState extends State<AddConnection> {
     return userConnectionRequests;
   }
 
+// future function to get the user to send connection requests list from database////
   Future<List> getUserToSendConnectionRequests(id) async {
-    connectionRequests = [];
+    userToSendConnectionRequests = [];
     try {
       var docRef = _firestore.collection('users').doc(id);
       await docRef.get().then((doc) {
-        connectionRequests.addAll(doc.data()?['connectionsrequests']);
+        if (doc.exists) {
+          userToSendConnectionRequests
+              .addAll(doc.data()?['connectionsrequests']);
+        }
       });
     } catch (e) {
       print('Error fetching connectionsrequests: $e');
     }
-    return connectionRequests;
+    return userToSendConnectionRequests;
   }
 
+// function to see if user to send is exist and if exist check //alreadySendRequest variable//////
   void searchUser(email) async {
+    bool flag = true;
     for (var i = 0; i < users.length; i++) {
       if (email == users[i]['email']) {
         setState(() {
           _userEmail = users[i]['email'];
         });
+        flag = true;
         break;
+      } else {
+        flag = false;
       }
     }
-
+    if (_userEmail == "" || !flag) {
+      setState(() {
+        _userEmail = "email is not valid";
+      });
+      return;
+    }
     await getUserSendConnections();
+    print(sendConnections);
     for (var i = 0; i < sendConnections.length; i++) {
       if (email == sendConnections[i]['user']) {
         setState(() {
           alreadySendRequest = true;
         });
-        break;
+        return;
       } else {
         setState(() {
           alreadySendRequest = false;
@@ -112,20 +143,16 @@ class _AddConnectionState extends State<AddConnection> {
         setState(() {
           alreadySendRequest = true;
         });
-        break;
+        return;
       } else {
         setState(() {
           alreadySendRequest = false;
         });
       }
     }
-    if (_userEmail == "") {
-      setState(() {
-        _userEmail = "email is not valid";
-      });
-    }
   }
 
+//future function to send connection and update both current user and user to send database////
   Future<void> sendConnection() async {
     Map<String, dynamic> userToSendData = {};
     Map<String, dynamic> userData = {
@@ -137,31 +164,28 @@ class _AddConnectionState extends State<AddConnection> {
       QuerySnapshot<Map<String, dynamic>> snapshot =
           await _firestore.collection('users').get();
       snapshot.docs.forEach((doc) async {
-        if (_userEmail == doc.data()['email']) {
-          userToSendData = {'user': _userEmail, 'id': doc.id};
-          sendConnections.add(userToSendData);
-          await getUserToSendConnectionRequests(userToSendData['id']);
-          connectionRequests.add(userData);
+        if (doc.exists) {
+          if (_userEmail == doc.data()['email']) {
+            userToSendData = {'user': _userEmail, 'id': doc.id};
+            sendConnections.add(userToSendData);
+            await getUserToSendConnectionRequests(userToSendData['id']);
+            userToSendConnectionRequests.add(userData);
+          }
         }
       });
 
-      print('send');
-      print(sendConnections);
-
-      var saveDocRef =
+      var userDocRef =
           _firestore.collection('users').doc(_auth.currentUser?.uid);
-      await saveDocRef.update({'sendconnections': sendConnections});
+      await userDocRef.update({'sendconnections': sendConnections});
 
-      var sendDocRef = _firestore.collection('users').doc(userToSendData['id']);
-      print('send2');
-      print(connectionRequests);
-      await sendDocRef.update({'connectionsrequests': connectionRequests});
-
+      var userToSendDocRef =
+          _firestore.collection('users').doc(userToSendData['id']);
+      await userToSendDocRef
+          .update({'connectionsrequests': userToSendConnectionRequests});
       setState(() {
         alreadySendRequest = true;
       });
     } catch (e) {
-      // Handle the error appropriately, e.g., show an error message
       print('Error sending connection: $e');
     }
   }

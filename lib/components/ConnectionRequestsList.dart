@@ -13,7 +13,8 @@ class ConnectionRequestsList extends StatefulWidget {
 class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
 //get firestore for deleting and updating purpose(current user and connection user)
   var userWhoSendRequest;
-  void removeItem(int i) async {
+
+  Future<void> removeItem(int i) async {
     setState(() {
       userWhoSendRequest = widget.connectionRequest[i]['id'];
       widget.connectionRequest.removeAt(i);
@@ -24,12 +25,12 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
   Future<void> deleteRequest() async {
     try {
       // Get a reference to auth that contains the user info
-      final FirebaseAuth _auth = FirebaseAuth.instance;
+      final FirebaseAuth auth = FirebaseAuth.instance;
 
       // Get a reference to the document that contains the request
       var userDocRef = FirebaseFirestore.instance
           .collection('users')
-          .doc(_auth.currentUser?.uid);
+          .doc(auth.currentUser?.uid);
 
       var userWhoSendRequestDocRef = FirebaseFirestore.instance
           .collection('users')
@@ -52,7 +53,7 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
       );
       //After that we find where the current user is in the user who send request list and remove it
       var item = removeFromUserWhoSendRequest
-          .where((element) => element['user'] == _auth.currentUser?.email);
+          .where((element) => element['user'] == auth.currentUser?.email);
       removeFromUserWhoSendRequest.remove(item.first);
 
       //updating the user sendconnections list without the current user
@@ -64,6 +65,69 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
     } catch (e) {
       print('Error updating field: $e');
     }
+  }
+
+  Future<void> acceptRequest(i) async {
+    try {
+      // Get a reference to auth that contains the user info
+      final FirebaseAuth auth = FirebaseAuth.instance;
+      userWhoSendRequest = await widget.connectionRequest[i]['id'];
+      Map<String, dynamic> userWhoSendData = {
+        'user': widget.connectionRequest[i]['user'],
+        'id': widget.connectionRequest[i]['id']
+      };
+      Map<String, dynamic> userData = {
+        'user': auth.currentUser?.email,
+        'id': auth.currentUser?.uid
+      };
+      // Get a reference to the document that contains the request
+      var userDocRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(auth.currentUser?.uid);
+
+      var userWhoSendRequestDocRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(userWhoSendRequest);
+
+      // Update the field in the document
+      //First we need to create a list for the user who send the request
+      List userWhoSendRequestConnections = [];
+      //Then we need to fill the list wuth this user connections
+      await userWhoSendRequestDocRef.get().then(
+        (doc) {
+          if (doc.exists) {
+            setState(() {
+              userWhoSendRequestConnections
+                  .addAll(doc.data()?['connections'] ?? []);
+            });
+          }
+          userWhoSendRequestConnections.add(userData);
+        },
+        onError: (e) => print("Error getting document: $e"),
+      );
+
+      List currentUserConnections = [];
+      //Then we need to fill the list wuth this user connections
+      await userWhoSendRequestDocRef.get().then(
+        (doc) {
+          if (doc.exists) {
+            setState(() {
+              currentUserConnections.addAll(doc.data()?['connections'] ?? []);
+            });
+          }
+          currentUserConnections.add(userWhoSendData);
+        },
+        onError: (e) => print("Error getting document: $e"),
+      );
+      //updating the user connections list
+      await userWhoSendRequestDocRef
+          .update({'connections': userWhoSendRequestConnections});
+      //updating the current user connections list
+      await userDocRef.update({'connections': currentUserConnections});
+    } catch (e) {
+      print('Error updating field: $e');
+    }
+    await removeItem(i);
   }
 
   @override
@@ -87,7 +151,9 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
                           icon: Icon(Icons.delete),
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            acceptRequest(index);
+                          },
                           icon: const Icon(Icons.add_box_outlined,
                               color: Colors.blue, size: 28),
                         ),

@@ -1,22 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shoppinglist/screens/AddConnection.dart';
-import 'package:shoppinglist/screens/ConnectionRequestsList.dart';
-
+import 'package:shoppinglist/screens/AddConnectionScreen.dart';
+import 'package:shoppinglist/components/ConnectionRequestsList.dart';
+import 'package:shoppinglist/components/SendConnectionsList.dart';
 import '../components/MyConnectionsList.dart';
 
-class MyConnections extends StatefulWidget {
-  const MyConnections({Key? key});
+class MyConnectionsScreen extends StatefulWidget {
+  const MyConnectionsScreen({super.key});
 
   @override
-  State<MyConnections> createState() => _MyConnectionsState();
+  State<MyConnectionsScreen> createState() => _MyConnectionsScreenState();
 }
 
-class _MyConnectionsState extends State<MyConnections>
+class _MyConnectionsScreenState extends State<MyConnectionsScreen>
     with SingleTickerProviderStateMixin {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   var data;
   List myConnections = [];
   List connectionRequest = [];
@@ -36,9 +37,8 @@ class _MyConnectionsState extends State<MyConnections>
     sendConnections = [];
 
     if (_auth.currentUser != null) {
-      var collectionRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(_auth.currentUser!.uid);
+      var collectionRef =
+          _firestore.collection('users').doc(_auth.currentUser!.uid);
 
       await collectionRef.get().then(
         (doc) {
@@ -49,9 +49,6 @@ class _MyConnectionsState extends State<MyConnections>
                   .addAll(doc.data()?['connectionsrequests'] ?? []);
               sendConnections.addAll(doc.data()?['sendconnections'] ?? []);
             });
-            print(myConnections);
-            print(connectionRequest);
-            print(sendConnections);
           }
         },
         onError: (e) => print("Error getting document: $e"),
@@ -101,7 +98,7 @@ class _MyConnectionsState extends State<MyConnections>
           Navigator.push(
             context,
             MaterialPageRoute<void>(
-              builder: (BuildContext context) => AddConnection(),
+              builder: (BuildContext context) => AddConnectionScreen(),
             ),
           );
         },
@@ -166,7 +163,8 @@ class _NestedTabBarState extends State<NestedTabBar>
                     connectionRequest: widget.connectionRequest),
               ),
               Card(
-                child: MyConnectionsList(myConnections: widget.sendConnections),
+                child: SendConnectionsList(
+                    sendConnections: widget.sendConnections),
               ),
             ],
           ),

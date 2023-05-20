@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 
 import 'TheListScreen.dart';
 
-class FinishedLists extends StatefulWidget {
-  const FinishedLists({super.key});
+class FinishedListsScreen extends StatefulWidget {
+  const FinishedListsScreen({super.key});
 
   @override
-  State<FinishedLists> createState() => _FinishedListsState();
+  State<FinishedListsScreen> createState() => _FinishedListsScreenState();
 }
 
-class _FinishedListsState extends State<FinishedLists> {
+class _FinishedListsScreenState extends State<FinishedListsScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   User? _user;
   List<Map<String, dynamic>> finishedLists = [];

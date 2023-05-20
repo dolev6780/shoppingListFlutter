@@ -102,7 +102,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text("יצירת רשימה חדשה ${_email!}"),
+        title: Text("יצירת רשימה חדשה"),
       ),
       body: SingleChildScrollView(
         child: Center(
