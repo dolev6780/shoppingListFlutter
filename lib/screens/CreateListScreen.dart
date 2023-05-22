@@ -5,7 +5,7 @@ import 'package:shoppinglist/screens/HomeScreen.dart';
 import '../components/TextInput.dart';
 
 class CreateListScreen extends StatefulWidget {
-  const CreateListScreen({super.key});
+  const CreateListScreen({Key? key}) : super(key: key);
 
   @override
   State<CreateListScreen> createState() => _CreateListScreenState();
@@ -13,6 +13,7 @@ class CreateListScreen extends StatefulWidget {
 
 class _CreateListScreenState extends State<CreateListScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
   User? _user;
   String? _email = "";
   final TextEditingController listTitleController = TextEditingController();
@@ -20,6 +21,9 @@ class _CreateListScreenState extends State<CreateListScreen> {
   final TextEditingController itemQtyController = TextEditingController();
   int items = 0;
   List<Shoppinglist> shopList = [];
+  List connections = [];
+  String? selectedOption;
+  final List<DropdownMenuItem<dynamic>> options = [];
 
   @override
   void initState() {
@@ -28,6 +32,31 @@ class _CreateListScreenState extends State<CreateListScreen> {
     if (!(_user?.email == null)) {
       _email = _user?.email;
     }
+
+    getConnections().then((List result) {
+      setState(() {
+        connections = result;
+        selectedOption =
+            connections.isNotEmpty ? connections[0]['id'].toString() : null;
+      });
+    });
+  }
+
+  Future<List> getConnections() async {
+    connections = [];
+    connections.add({'nickName': "לעצמי", 'user': _email, 'id': _user?.uid});
+    try {
+      var docRef = await firestore.collection('users').doc(_user?.uid).get();
+      if (docRef.exists) {
+        if (docRef.data()?['connections'] != null) {
+          connections.addAll(docRef.data()?['connections']);
+        }
+      }
+    } catch (e) {
+      print('Error fetching users: $e');
+    }
+    print(connections);
+    return connections;
   }
 
   @override
@@ -56,11 +85,13 @@ class _CreateListScreenState extends State<CreateListScreen> {
     }
 
     void createList() async {
-      List data = [];
+      List<Map<String, dynamic>> data = [];
       final FirebaseFirestore firestore = FirebaseFirestore.instance;
       final CollectionReference collectionRef = firestore.collection("users");
-      final DocumentReference newDocRef =
+      final DocumentReference userDocRef =
           collectionRef.doc("${_user?.uid}").collection("shoplists").doc();
+      final DocumentReference userDestinedDocRef =
+          collectionRef.doc("${selectedOption}").collection("shoplists").doc();
       for (var i = 0; i < shopList.length; i++) {
         data.add({
           'item': shopList[i].item,
@@ -77,6 +108,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
       var date = "$day/$month/${DateTime.now().year}";
 
       final docData = {
+        "creator": _email,
         "title": listTitleController.text,
         "list": data,
         "date": date,
@@ -84,8 +116,8 @@ class _CreateListScreenState extends State<CreateListScreen> {
       };
       if (_email?.isNotEmpty == true) {
         if (shopList.isNotEmpty) {
-          await newDocRef.set(docData);
-          // ignore: use_build_context_synchronously
+          await userDocRef.set(docData);
+          await userDestinedDocRef.set(docData);
           Navigator.push(
               context,
               MaterialPageRoute<void>(
@@ -95,19 +127,55 @@ class _CreateListScreenState extends State<CreateListScreen> {
           print("list is empty");
         }
       } else {
-        print("must sign");
+        print("must sign in");
       }
     }
 
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text("יצירת רשימה חדשה"),
+        title: const Text("יצירת רשימה חדשה"),
       ),
       body: SingleChildScrollView(
         child: Center(
           child: Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(0, 5, 15, 5),
+                  decoration: BoxDecoration(
+                      border: Border.all(
+                          style: BorderStyle.solid, color: Colors.grey),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Directionality(
+                    textDirection: TextDirection.rtl,
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton(
+                        menuMaxHeight: 300,
+                        value: selectedOption,
+                        items:
+                            connections.map<DropdownMenuItem<String>>((value) {
+                          return DropdownMenuItem<String>(
+                              value: value['id'].toString(),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: value['nickName'].toString().isNotEmpty
+                                    ? Text(value['nickName'].toString())
+                                    : Text(value['user'].toString()),
+                              ));
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedOption = value as String?;
+                          });
+                        },
+                        isExpanded: true,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16.0),
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -161,7 +229,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
                           color: Colors.black,
                           width: 1.0,
                           style: BorderStyle.solid)),
-                  height: 285,
+                  height: 230,
                   width: double.infinity,
                   child: shopList.isEmpty
                       ? const Padding(
@@ -185,7 +253,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
                                       onPressed: () {
                                         removeItem(index);
                                       },
-                                      icon: Icon(Icons.delete),
+                                      icon: const Icon(Icons.delete),
                                     ),
                                   ],
                                 ),
@@ -199,10 +267,13 @@ class _CreateListScreenState extends State<CreateListScreen> {
                                       radius: 15,
                                       child:
                                           Text(shopList[index].qty.toString())),
-                                  const SizedBox(
-                                    width: 10,
+                                  const SizedBox(width: 8.0),
+                                  Text(
+                                    shopList[index].item,
+                                    style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600),
                                   ),
-                                  Text(shopList[index].item),
                                 ],
                               ),
                             );
@@ -211,35 +282,28 @@ class _CreateListScreenState extends State<CreateListScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text("כמות פריטים: $items"),
-                    const SizedBox(
-                      width: 10,
-                    ),
-                    Text("כמות מוצרים: ${shopList.length}"),
-                  ],
+                padding: const EdgeInsets.all(16.0),
+                child: TextButton(
+                  onPressed: () {
+                    createList();
+                  },
+                  child: const Text(
+                    'צור רשימה',
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            createList();
-          },
-          label: const Text("צור רשימה")),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 }
 
 class Shoppinglist {
-  String item;
-  int qty;
+  final String item;
+  final int qty;
 
   Shoppinglist(this.item, this.qty);
 }

@@ -5,12 +5,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'HomeScreen.dart';
 
 class TheListScreen extends StatefulWidget {
+  final String creator;
   final String title;
   final List list;
   final String docId;
   final String uid;
   const TheListScreen(
       {super.key,
+      required this.creator,
       required this.title,
       required this.list,
       required this.docId,
@@ -102,66 +104,79 @@ class _TheListScreenState extends State<TheListScreen> {
         title: Text(widget.title),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 20, 8, 90),
-        child: Container(
-            child: ListView.builder(
-          itemCount: widget.list.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              onTap: () {
-                setState(() {
-                  _onItemChecked(index);
-                });
-              },
-              tileColor: index % 2 != 0
-                  ? Colors.blueGrey.shade100
-                  : Colors.blue.shade200,
-              title: Row(
-                textDirection: TextDirection.rtl,
-                children: [
-                  widget.list[index]['checked'] == true
-                      ? const Icon(
-                          Icons.check,
-                          color: Colors.green,
-                        )
-                      : Text(''),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  CircleAvatar(
-                      backgroundColor: widget.list[index]['checked'] == true
-                          ? Colors.green
-                          : Colors.blue,
-                      radius: 15,
-                      child: Text(widget.list[index]['qty'].toString())),
-                  const SizedBox(
-                    width: 10,
-                  ),
-                  Text(
-                    widget.list[index]['item'].toString(),
-                    style: TextStyle(
-                        color: widget.list[index]['checked'] == true
+      body: Stack(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 20, 8, 90),
+          child: Container(
+              child: ListView.builder(
+            itemCount: widget.list.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                onTap: () {
+                  setState(() {
+                    _onItemChecked(index);
+                  });
+                },
+                tileColor: index % 2 != 0
+                    ? Colors.blueGrey.shade100
+                    : Colors.blue.shade200,
+                title: Row(
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    widget.list[index]['checked'] == true
+                        ? const Icon(
+                            Icons.check,
+                            color: Colors.green,
+                          )
+                        : Text(''),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    CircleAvatar(
+                        backgroundColor: widget.list[index]['checked'] == true
                             ? Colors.green
-                            : Colors.white,
-                        fontWeight: widget.list[index]['checked'] == true
-                            ? FontWeight.bold
-                            : FontWeight.normal),
-                  ),
-                ],
+                            : Colors.blue,
+                        radius: 15,
+                        child: Text(widget.list[index]['qty'].toString())),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Text(
+                      widget.list[index]['item'].toString(),
+                      style: TextStyle(
+                          color: widget.list[index]['checked'] == true
+                              ? Colors.green
+                              : Colors.white,
+                          fontWeight: widget.list[index]['checked'] == true
+                              ? FontWeight.bold
+                              : FontWeight.normal),
+                    ),
+                  ],
+                ),
+                leading: IconButton(
+                    onPressed: () {
+                      setState(() {
+                        widget.list.removeAt(index);
+                        updateSubcollectionField();
+                      });
+                    },
+                    icon: Icon(Icons.delete)),
+              );
+            },
+          )),
+        ),
+      ]),
+      bottomSheet: Padding(
+          padding: EdgeInsets.all(10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FloatingActionButton(
+                onPressed: () {},
+                child: Icon(Icons.edit),
               ),
-              leading: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      widget.list.removeAt(index);
-                      updateSubcollectionField();
-                    });
-                  },
-                  icon: Icon(Icons.delete)),
-            );
-          },
-        )),
-      ),
+            ],
+          )),
       floatingActionButton: finishedList == true
           ? FloatingActionButton.extended(
               onPressed: () {

@@ -74,11 +74,13 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
       userWhoSendRequest = await widget.connectionRequest[i]['id'];
       Map<String, dynamic> userWhoSendData = {
         'user': widget.connectionRequest[i]['user'],
-        'id': widget.connectionRequest[i]['id']
+        'id': widget.connectionRequest[i]['id'],
+        'nickName': ""
       };
       Map<String, dynamic> userData = {
         'user': auth.currentUser?.email,
-        'id': auth.currentUser?.uid
+        'id': auth.currentUser?.uid,
+        'nickName': ""
       };
       // Get a reference to the document that contains the request
       var userDocRef = FirebaseFirestore.instance

@@ -34,6 +34,7 @@ class ListTitlesState extends State<ListTitles> {
             .where((doc) => doc.data()['finished'] == false)
             .forEach((doc) {
           newShopListTitles.add({
+            'creator': doc.data()['creator'],
             'title': doc.data()['title'],
             'date': doc.data()['date'],
             'list': doc.data()['list'],
@@ -84,6 +85,7 @@ class ListTitlesState extends State<ListTitles> {
                               MaterialPageRoute<void>(
                                 builder: (BuildContext context) =>
                                     TheListScreen(
+                                  creator: shopListTitles[index]['creator'],
                                   title: shopListTitles[index]['title'],
                                   list: shopListTitles[index]['list'],
                                   docId: docId,
@@ -92,6 +94,19 @@ class ListTitlesState extends State<ListTitles> {
                               ));
                         },
                         child: ListTile(
+                          trailing: Text(
+                            shopListTitles[index]['creator']
+                                .toString()
+                                .substring(
+                                    0,
+                                    shopListTitles[index]['creator']
+                                        .toString()
+                                        .indexOf('@'))
+                                .toString(),
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700),
+                          ),
                           title: Text(
                             shopListTitles[index]['title'],
                             textDirection: TextDirection.rtl,

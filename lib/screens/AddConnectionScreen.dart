@@ -157,7 +157,8 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
     Map<String, dynamic> userToSendData = {};
     Map<String, dynamic> userData = {
       'user': _auth.currentUser?.email,
-      'id': _auth.currentUser?.uid
+      'id': _auth.currentUser?.uid,
+      'nickName': ""
     };
 
     try {
@@ -166,7 +167,7 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
       snapshot.docs.forEach((doc) async {
         if (doc.exists) {
           if (_userEmail == doc.data()['email']) {
-            userToSendData = {'user': _userEmail, 'id': doc.id};
+            userToSendData = {'user': _userEmail, 'id': doc.id, 'nickName': ""};
             sendConnections.add(userToSendData);
             await getUserToSendConnectionRequests(userToSendData['id']);
             userToSendConnectionRequests.add(userData);
