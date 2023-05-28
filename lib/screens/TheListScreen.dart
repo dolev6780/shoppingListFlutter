@@ -1,4 +1,4 @@
-import 'dart:math';
+// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -24,12 +24,12 @@ class TheListScreen extends StatefulWidget {
 
 class _TheListScreenState extends State<TheListScreen> {
   bool finishedList = false;
+  @override
   void initState() {
     super.initState();
     setState(() {
       _checkFinishedList();
     });
-    print(widget.docId);
   }
 
   Future<void> updateSubcollectionField() async {
@@ -53,6 +53,7 @@ class _TheListScreenState extends State<TheListScreen> {
             ));
       }
     } catch (e) {
+      // ignore: avoid_print
       print('Error updating subcollection field: $e');
     }
   }
@@ -64,12 +65,14 @@ class _TheListScreenState extends State<TheListScreen> {
       var subcollectionRef = docRef.collection('shoplists');
 
       await subcollectionRef.doc(widget.docId).update({'finished': true});
+      // ignore: use_build_context_synchronously
       await Navigator.push(
           context,
           MaterialPageRoute<void>(
             builder: (BuildContext context) => const HomeScreen(),
           ));
     } catch (e) {
+      // ignore: avoid_print
       print('Error updating subcollection field: $e');
     }
   }
@@ -107,8 +110,7 @@ class _TheListScreenState extends State<TheListScreen> {
       body: Stack(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(8, 20, 8, 90),
-          child: Container(
-              child: ListView.builder(
+          child: ListView.builder(
             itemCount: widget.list.length,
             itemBuilder: (context, index) {
               return ListTile(
@@ -128,7 +130,7 @@ class _TheListScreenState extends State<TheListScreen> {
                             Icons.check,
                             color: Colors.green,
                           )
-                        : Text(''),
+                        : const Text(''),
                     const SizedBox(
                       width: 10,
                     ),
@@ -160,20 +162,20 @@ class _TheListScreenState extends State<TheListScreen> {
                         updateSubcollectionField();
                       });
                     },
-                    icon: Icon(Icons.delete)),
+                    icon: const Icon(Icons.delete)),
               );
             },
-          )),
+          ),
         ),
       ]),
       bottomSheet: Padding(
-          padding: EdgeInsets.all(10),
+          padding: const EdgeInsets.all(10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               FloatingActionButton(
                 onPressed: () {},
-                child: Icon(Icons.edit),
+                child: const Icon(Icons.edit),
               ),
             ],
           )),
@@ -182,7 +184,7 @@ class _TheListScreenState extends State<TheListScreen> {
               onPressed: () {
                 finishList();
               },
-              label: Text(
+              label: const Text(
                 'סיים רשימה',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),

@@ -1,3 +1,5 @@
+// ignore_for_file: file_names
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,10 +13,9 @@ class ListTitles extends StatefulWidget {
 }
 
 class ListTitlesState extends State<ListTitles> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   User? _user;
   List<Map<String, dynamic>> shopListTitles = [];
-  List<bool> _isOpen = [];
+  List<bool> isOpen = [];
   late QuerySnapshot snapshot;
 
   @override
@@ -43,8 +44,7 @@ class ListTitlesState extends State<ListTitles> {
         });
         setState(() {
           shopListTitles = newShopListTitles;
-          _isOpen =
-              List<bool>.generate(shopListTitles.length, (index) => false);
+          isOpen = List<bool>.generate(shopListTitles.length, (index) => false);
         });
       });
     } else {
@@ -64,7 +64,7 @@ class ListTitlesState extends State<ListTitles> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: shopListTitles.isNotEmpty
           ? ListView.builder(
               itemCount: shopListTitles.length,
@@ -95,22 +95,15 @@ class ListTitlesState extends State<ListTitles> {
                         },
                         child: ListTile(
                           trailing: Text(
-                            shopListTitles[index]['creator']
-                                .toString()
-                                .substring(
-                                    0,
-                                    shopListTitles[index]['creator']
-                                        .toString()
-                                        .indexOf('@'))
-                                .toString(),
-                            style: TextStyle(
+                            "${shopListTitles[index]['creator'].toString().substring(0, shopListTitles[index]['creator'].toString().indexOf('@'))} :יוצר",
+                            style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700),
                           ),
                           title: Text(
                             shopListTitles[index]['title'],
                             textDirection: TextDirection.rtl,
-                            style: TextStyle(
+                            style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700),
                           ),
@@ -119,7 +112,7 @@ class ListTitlesState extends State<ListTitles> {
                             textDirection: TextDirection.rtl,
                             style: TextStyle(color: Colors.grey.shade50),
                           ),
-                          leading: Container(
+                          leading: SizedBox(
                             width: 100,
                             child: Row(
                               children: [
@@ -127,7 +120,7 @@ class ListTitlesState extends State<ListTitles> {
                                   onPressed: () {
                                     deleteList(docId);
                                   },
-                                  icon: Icon(Icons.delete,
+                                  icon: const Icon(Icons.delete,
                                       color: Colors.white, size: 24),
                                 ),
                               ],
@@ -136,7 +129,7 @@ class ListTitlesState extends State<ListTitles> {
                         ),
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 10,
                     )
                   ],
