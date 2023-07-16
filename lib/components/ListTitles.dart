@@ -95,7 +95,7 @@ class ListTitlesState extends State<ListTitles> {
                         },
                         child: ListTile(
                           trailing: Text(
-                            "${shopListTitles[index]['creator'].toString().substring(0, shopListTitles[index]['creator'].toString().indexOf('@'))} :יוצר",
+                            "${shopListTitles[index]['creator']?.toString().substring(0, shopListTitles[index]['creator'].toString().indexOf('@'))} :יוצר",
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700),
