@@ -96,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: Container(
+      body: SizedBox(
         height: screenHeight - 100,
         child: const ListTitles(),
       ),
