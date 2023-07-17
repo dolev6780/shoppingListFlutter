@@ -117,7 +117,9 @@ class _CreateListScreenState extends State<CreateListScreen> {
       if (_email?.isNotEmpty == true) {
         if (shopList.isNotEmpty) {
           await userDocRef.set(docData);
-          await userDestinedDocRef.set(docData);
+          if (selectedOption != _user?.uid) {
+            await userDestinedDocRef.set(docData);
+          }
           Navigator.push(
               context,
               MaterialPageRoute<void>(
