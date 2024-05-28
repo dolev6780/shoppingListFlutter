@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 enum InputType {
   text,
@@ -32,19 +31,24 @@ class TextInputWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      maxLength: 20,
-      keyboardType: _getKeyboardType(inputType),
-      textAlign: TextAlign.end,
-      controller: controller,
-      decoration: InputDecoration(
-        counterText: "",
-        hintText: placeholder,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(
-            color: Colors.black,
-            width: 1.0,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: TextField(
+        maxLength: 20,
+        keyboardType: _getKeyboardType(inputType),
+        textAlign: TextAlign.start,
+        controller: controller,
+        decoration: InputDecoration(
+          contentPadding: const EdgeInsets.all(15),
+          counterText: "",
+          hintText: placeholder,
+          label: Text(placeholder),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(
+              color: Color.fromARGB(255, 7, 0, 142),
+              width: 1.0,
+            ),
           ),
         ),
       ),

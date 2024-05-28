@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -69,13 +71,13 @@ class _MyConnectionsListState extends State<MyConnectionsList> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: widget.myConnections.isNotEmpty
           ? ListView.builder(
               itemCount: widget.myConnections.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  leading: Container(
+                  leading: SizedBox(
                     width: 100,
                     child: Row(
                       children: [
@@ -83,7 +85,7 @@ class _MyConnectionsListState extends State<MyConnectionsList> {
                           onPressed: () {
                             removeItem(index);
                           },
-                          icon: Icon(Icons.delete),
+                          icon: const Icon(Icons.delete),
                         ),
                       ],
                     ),
@@ -107,7 +109,7 @@ class _MyConnectionsListState extends State<MyConnectionsList> {
                 );
               },
             )
-          : SizedBox(),
+          : const SizedBox(),
     );
   }
 }

@@ -12,7 +12,7 @@ class ConnectionRequestsList extends StatefulWidget {
 
 class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
 //get firestore for deleting and updating purpose(current user and connection user)
-  var userWhoSendRequest;
+  late String userWhoSendRequest;
 
   Future<void> removeItem(int i) async {
     setState(() {
@@ -49,6 +49,7 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
             });
           }
         },
+        // ignore: avoid_print
         onError: (e) => print("Error getting document: $e"),
       );
       //After that we find where the current user is in the user who send request list and remove it
@@ -63,6 +64,7 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
       await userDocRef
           .update({'connectionsrequests': widget.connectionRequest});
     } catch (e) {
+      // ignore: avoid_print
       print('Error updating field: $e');
     }
   }
@@ -105,6 +107,7 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
           }
           userWhoSendRequestConnections.add(userData);
         },
+        // ignore: avoid_print
         onError: (e) => print("Error getting document: $e"),
       );
 
@@ -119,6 +122,7 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
           }
           currentUserConnections.add(userWhoSendData);
         },
+        // ignore: avoid_print
         onError: (e) => print("Error getting document: $e"),
       );
       //updating the user connections list
@@ -127,6 +131,7 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
       //updating the current user connections list
       await userDocRef.update({'connections': currentUserConnections});
     } catch (e) {
+      // ignore: avoid_print
       print('Error updating field: $e');
     }
     await removeItem(i);
@@ -134,15 +139,14 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
 
   @override
   Widget build(BuildContext context) {
-    print(userWhoSendRequest);
     return Container(
-      padding: EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16.0),
       child: widget.connectionRequest.isNotEmpty
           ? ListView.builder(
               itemCount: widget.connectionRequest.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  leading: Container(
+                  leading: SizedBox(
                     width: 100,
                     child: Row(
                       children: [
@@ -150,7 +154,7 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
                           onPressed: () {
                             removeItem(index);
                           },
-                          icon: Icon(Icons.delete),
+                          icon: const Icon(Icons.delete),
                         ),
                         IconButton(
                           onPressed: () {
@@ -181,7 +185,7 @@ class _ConnectionRequestsListState extends State<ConnectionRequestsList> {
                 );
               },
             )
-          : SizedBox(),
+          : const SizedBox(),
     );
   }
 }

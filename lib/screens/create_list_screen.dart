@@ -1,8 +1,11 @@
+// ignore_for_file: avoid_print, use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shoppinglist/screens/HomeScreen.dart';
-import '../components/TextInput.dart';
+import 'package:shoppinglist/screens/home_screen.dart';
+import '../components/app_bar.dart';
+import '../components/text_input.dart';
 
 class CreateListScreen extends StatefulWidget {
   const CreateListScreen({Key? key}) : super(key: key);
@@ -12,7 +15,6 @@ class CreateListScreen extends StatefulWidget {
 }
 
 class _CreateListScreenState extends State<CreateListScreen> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   User? _user;
   String? _email = "";
@@ -44,7 +46,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
 
   Future<List> getConnections() async {
     connections = [];
-    connections.add({'nickName': "לעצמי", 'user': _email, 'id': _user?.uid});
+    connections.add({'nickName': "רק לעצמי", 'user': _email, 'id': _user?.uid});
     try {
       var docRef = await firestore.collection('users').doc(_user?.uid).get();
       if (docRef.exists) {
@@ -91,7 +93,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
       final DocumentReference userDocRef =
           collectionRef.doc("${_user?.uid}").collection("shoplists").doc();
       final DocumentReference userDestinedDocRef =
-          collectionRef.doc("${selectedOption}").collection("shoplists").doc();
+          collectionRef.doc("$selectedOption").collection("shoplists").doc();
       for (var i = 0; i < shopList.length; i++) {
         data.add({
           'item': shopList[i].item,
@@ -134,10 +136,12 @@ class _CreateListScreenState extends State<CreateListScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text("יצירת רשימה חדשה"),
-      ),
+      appBar: const PreferredSize(
+          preferredSize: Size.fromHeight(kToolbarHeight),
+          child: Appbar(
+            title: "יצירת רשימה חדשה",
+            backBtn: true,
+          )),
       body: SingleChildScrollView(
         child: Center(
           child: Column(
@@ -145,15 +149,18 @@ class _CreateListScreenState extends State<CreateListScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: Container(
-                  padding: EdgeInsets.fromLTRB(0, 5, 15, 5),
+                  padding: const EdgeInsets.fromLTRB(15, 0, 15, 0),
                   decoration: BoxDecoration(
                       border: Border.all(
-                          style: BorderStyle.solid, color: Colors.grey),
+                          style: BorderStyle.solid,
+                          color: const Color.fromARGB(255, 8, 45, 114)),
                       borderRadius: BorderRadius.circular(10)),
                   child: Directionality(
                     textDirection: TextDirection.rtl,
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton(
+                        borderRadius: BorderRadius.circular(10),
+                        icon: const Icon(Icons.share),
                         menuMaxHeight: 300,
                         value: selectedOption,
                         items:
@@ -164,12 +171,13 @@ class _CreateListScreenState extends State<CreateListScreen> {
                                 alignment: Alignment.centerRight,
                                 child: value['nickName'].toString().isNotEmpty
                                     ? Text(value['nickName'].toString())
-                                    : Text(value['user'].toString()),
+                                    : Text(value['user'].toString().substring(0,
+                                        value['user'].toString().indexOf("@"))),
                               ));
                         }).toList(),
                         onChanged: (value) {
                           setState(() {
-                            selectedOption = value as String?;
+                            selectedOption = value;
                           });
                         },
                         isExpanded: true,
@@ -178,7 +186,7 @@ class _CreateListScreenState extends State<CreateListScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16.0),
+              const SizedBox(height: 8.0),
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: TextInputWidget(
@@ -193,12 +201,39 @@ class _CreateListScreenState extends State<CreateListScreen> {
                   children: [
                     Expanded(
                       flex: 1,
-                      child: TextButton(
-                        onPressed: () {
-                          item();
-                          FocusScope.of(context).unfocus();
-                        },
-                        child: const Text('הוסף'),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              Color.fromARGB(255, 74, 167, 243),
+                              Color.fromARGB(255, 22, 115, 228)
+                            ], // List of colors for the gradient
+                            begin: Alignment
+                                .centerLeft, // Starting point of the gradient
+                            end: Alignment
+                                .centerRight, // Ending point of the gradient
+                          ),
+                          borderRadius: BorderRadius.circular(
+                              10.0), // Optional border radius
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.grey, // Shadow color
+                              offset: Offset(0,
+                                  2), // Horizontal and vertical offset of the shadow
+                              blurRadius: 4.0, // Spread radius of the shadow
+                              spreadRadius:
+                                  0.0, // Extent of the shadow (positive values expand the shadow, negative values shrink it)
+                            ),
+                          ],
+                        ),
+                        child: TextButton(
+                          onPressed: () {
+                            item();
+                            FocusScope.of(context).unfocus();
+                          },
+                          child: const Text('הוסף',
+                              style: TextStyle(color: Colors.white)),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8.0),
@@ -228,10 +263,10 @@ class _CreateListScreenState extends State<CreateListScreen> {
                   decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                          color: Colors.black,
+                          color: Color.fromARGB(255, 28, 16, 199),
                           width: 1.0,
                           style: BorderStyle.solid)),
-                  height: 230,
+                  height: 250,
                   width: double.infinity,
                   child: shopList.isEmpty
                       ? const Padding(
@@ -246,37 +281,41 @@ class _CreateListScreenState extends State<CreateListScreen> {
                       : ListView.builder(
                           itemCount: shopList.length,
                           itemBuilder: (context, index) {
-                            return ListTile(
-                              leading: Container(
-                                width: 100,
-                                child: Row(
+                            return Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 5, 16, 0),
+                              child: ListTile(
+                                leading: SizedBox(
+                                  width: 100,
+                                  child: Row(
+                                    children: [
+                                      IconButton(
+                                        onPressed: () {
+                                          removeItem(index);
+                                        },
+                                        icon: Icon(Icons.delete,
+                                            color: Colors.blue[700]),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                contentPadding:
+                                    const EdgeInsets.only(left: 8, right: 8),
+                                title: Row(
+                                  textDirection: TextDirection.rtl,
                                   children: [
-                                    IconButton(
-                                      onPressed: () {
-                                        removeItem(index);
-                                      },
-                                      icon: const Icon(Icons.delete),
+                                    CircleAvatar(
+                                        radius: 15,
+                                        child: Text(
+                                            shopList[index].qty.toString())),
+                                    const SizedBox(width: 20.0),
+                                    Text(
+                                      shopList[index].item,
+                                      style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600),
                                     ),
                                   ],
                                 ),
-                              ),
-                              contentPadding:
-                                  const EdgeInsets.only(left: 8, right: 8),
-                              title: Row(
-                                textDirection: TextDirection.rtl,
-                                children: [
-                                  CircleAvatar(
-                                      radius: 15,
-                                      child:
-                                          Text(shopList[index].qty.toString())),
-                                  const SizedBox(width: 8.0),
-                                  Text(
-                                    shopList[index].item,
-                                    style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ],
                               ),
                             );
                           },
@@ -285,13 +324,42 @@ class _CreateListScreenState extends State<CreateListScreen> {
               ),
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: TextButton(
-                  onPressed: () {
-                    createList();
-                  },
-                  child: const Text(
-                    'צור רשימה',
-                    style: TextStyle(fontSize: 18),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color.fromARGB(255, 74, 167, 243),
+                        Color.fromARGB(255, 22, 115, 228)
+                      ], // List of colors for the gradient
+                      begin: Alignment
+                          .centerLeft, // Starting point of the gradient
+                      end:
+                          Alignment.centerRight, // Ending point of the gradient
+                    ),
+                    borderRadius:
+                        BorderRadius.circular(10.0), // Optional border radius
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.grey, // Shadow color
+                        offset: Offset(0,
+                            2), // Horizontal and vertical offset of the shadow
+                        blurRadius: 4.0, // Spread radius of the shadow
+                        spreadRadius:
+                            0.0, // Extent of the shadow (positive values expand the shadow, negative values shrink it)
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 0),
+                    child: TextButton(
+                      onPressed: () {
+                        createList();
+                      },
+                      child: const Text(
+                        'צור רשימה',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
+                    ),
                   ),
                 ),
               ),

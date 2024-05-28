@@ -45,7 +45,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyCjJeO4h2n4XISQV4dfd6X2q8ELPV-W0YU',
-    appId: '1:665451860631:web:8a452e0706fd78ea1e4fd2',
+    appId: '1:665451860631:web:81c703f3551188441e4fd2',
     messagingSenderId: '665451860631',
     projectId: 'shoppinglist-3ee28',
     authDomain: 'shoppinglist-3ee28.firebaseapp.com',
@@ -55,7 +55,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD3wIgM1xxLsFNBd39W61rV6wnXI618zqE',
-    appId: '1:665451860631:android:b007390de0aed4ae1e4fd2',
+    appId: '1:665451860631:android:c449ca57c0f62bd21e4fd2',
     messagingSenderId: '665451860631',
     projectId: 'shoppinglist-3ee28',
     databaseURL: 'https://shoppinglist-3ee28-default-rtdb.firebaseio.com',
@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAAJKFNmhlL8Ov9A4oxXe0LsPqA9N6dQ_Y',
-    appId: '1:665451860631:ios:1808ed5c36c464141e4fd2',
+    appId: '1:665451860631:ios:ef8a96cd15b7a6011e4fd2',
     messagingSenderId: '665451860631',
     projectId: 'shoppinglist-3ee28',
     databaseURL: 'https://shoppinglist-3ee28-default-rtdb.firebaseio.com',
@@ -75,7 +75,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAAJKFNmhlL8Ov9A4oxXe0LsPqA9N6dQ_Y',
-    appId: '1:665451860631:ios:1808ed5c36c464141e4fd2',
+    appId: '1:665451860631:ios:ef8a96cd15b7a6011e4fd2',
     messagingSenderId: '665451860631',
     projectId: 'shoppinglist-3ee28',
     databaseURL: 'https://shoppinglist-3ee28-default-rtdb.firebaseio.com',

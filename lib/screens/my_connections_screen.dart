@@ -1,10 +1,15 @@
+// ignore_for_file: avoid_print
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shoppinglist/screens/AddConnectionScreen.dart';
-import 'package:shoppinglist/components/ConnectionRequestsList.dart';
-import 'package:shoppinglist/components/SendConnectionsList.dart';
-import '../components/MyConnectionsList.dart';
+import 'package:shoppinglist/screens/add_connection_screen.dart';
+import 'package:shoppinglist/components/connection_requests_list.dart';
+import 'package:shoppinglist/components/send_connections_list.dart';
+import 'package:shoppinglist/screens/finished_lists_screen.dart';
+import 'package:shoppinglist/screens/home_screen.dart';
+import '../components/bottom_navigation.dart';
+import '../components/my_connections_list.dart';
 
 class MyConnectionsScreen extends StatefulWidget {
   const MyConnectionsScreen({super.key});
@@ -18,7 +23,6 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen>
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  var data;
   List myConnections = [];
   List connectionRequest = [];
   List sendConnections = [];
@@ -56,6 +60,33 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen>
     }
   }
 
+  int _currentIndex = 1;
+
+  void _onTabTapped(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+
+    switch (_currentIndex) {
+      case 0:
+        Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => const HomeScreen(),
+            ));
+        break;
+      case 1:
+        break;
+      case 2:
+        Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => const FinishedListsScreen(),
+            ));
+        break;
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -66,6 +97,15 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF3366FF), Color(0xFF00CCFF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
         title: const Text('אנשי הקשר שלי'),
         centerTitle: true,
         bottom: TabBar(
@@ -93,16 +133,34 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen>
           )
         ],
       ),
+      bottomNavigationBar: GradientBottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'עמוד הבית',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: 'אנשי הקשר שלי',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history_rounded),
+            label: 'היסטוריית רשימות',
+          ),
+        ],
+        currentIndex: _currentIndex,
+        onTap: _onTabTapped,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute<void>(
-              builder: (BuildContext context) => AddConnectionScreen(),
+              builder: (BuildContext context) => const AddConnectionScreen(),
             ),
           );
         },
-        label: Text("הוסף איש קשר"),
+        label: const Text("הוסף איש קשר"),
       ),
     );
   }

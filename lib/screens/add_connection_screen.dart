@@ -1,6 +1,10 @@
+// ignore_for_file: avoid_print
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
+import '../components/app_bar.dart';
 
 class AddConnectionScreen extends StatefulWidget {
   const AddConnectionScreen({Key? key}) : super(key: key);
@@ -40,13 +44,13 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
     try {
       QuerySnapshot<Map<String, dynamic>> snapshot =
           await _firestore.collection('users').get();
-      snapshot.docs.forEach((doc) {
+      for (var doc in snapshot.docs) {
         if (doc.exists) {
           if (_auth.currentUser?.uid != doc.id) {
             users.add({"email": doc.data()['email']});
           }
         }
-      });
+      }
     } catch (e) {
       print('Error fetching users: $e');
     }
@@ -164,6 +168,7 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
     try {
       QuerySnapshot<Map<String, dynamic>> snapshot =
           await _firestore.collection('users').get();
+      // ignore: avoid_function_literals_in_foreach_calls
       snapshot.docs.forEach((doc) async {
         if (doc.exists) {
           if (_userEmail == doc.data()['email']) {
@@ -194,15 +199,14 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("הוספת איש קשר"),
-        centerTitle: true,
-      ),
+      appBar: const PreferredSize(
+          preferredSize: Size.fromHeight(kToolbarHeight),
+          child: Appbar(title: "הוספת איש קשר", backBtn: true)),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: getUsers(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else {
@@ -222,7 +226,7 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
                             hintText: "הכנס אימייל",
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide(
+                              borderSide: const BorderSide(
                                 color: Colors.black,
                                 width: 1.0,
                               ),
@@ -234,7 +238,7 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
                           onPressed: () {
                             searchUser(searchController.text);
                           },
-                          child: Text("חפש")),
+                          child: const Text("חפש")),
                       _userEmail!.isNotEmpty
                           ? _userEmail == "email is not valid"
                               ? Text(_userEmail.toString())
@@ -257,11 +261,11 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
                                                 ? null
                                                 : sendConnection();
                                           },
-                                          child: Text("שלח בקשה")),
+                                          child: const Text("שלח בקשה")),
                                       Row(
                                         children: [
                                           Text(_userEmail.toString()),
-                                          SizedBox(
+                                          const SizedBox(
                                             width: 10.0,
                                           ),
                                           CircleAvatar(
@@ -273,10 +277,10 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
                                     ],
                                   ),
                                 )
-                          : Text(""),
+                          : const Text(""),
                     ],
                   )
-                : Text('No users found');
+                : const Text('No users found');
           }
         },
       ),

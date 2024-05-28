@@ -40,6 +40,7 @@ dependencies:
   cloud_firestore: ^4.5.2
   share: ^2.0.4
   searchfield: ^0.8.0
+  icons_plus: ^4.0.0
  
 
 dev_dependencies:
