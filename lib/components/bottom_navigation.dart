@@ -15,16 +15,7 @@ class GradientBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color.fromARGB(255, 0, 140, 255),
-            Color.fromARGB(255, 0, 119, 255)
-          ], // Set your gradient colors here
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-      ),
+      decoration: const BoxDecoration(color: Color.fromARGB(255, 20, 67, 117)),
       child: BottomNavigationBar(
         items: items,
         currentIndex: currentIndex,

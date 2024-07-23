@@ -201,7 +201,11 @@ class _AddConnectionScreenState extends State<AddConnectionScreen> {
     return Scaffold(
       appBar: const PreferredSize(
           preferredSize: Size.fromHeight(kToolbarHeight),
-          child: Appbar(title: "הוספת איש קשר", backBtn: true)),
+          child: Appbar(
+            title: "הוספת איש קשר",
+            backBtn: true,
+            color: Color.fromARGB(255, 20, 67, 117),
+          )),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: getUsers(),
         builder: (BuildContext context, AsyncSnapshot snapshot) {

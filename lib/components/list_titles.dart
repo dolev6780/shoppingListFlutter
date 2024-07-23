@@ -1,11 +1,7 @@
-// ignore_for_file: file_names
-
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:icons_plus/icons_plus.dart';
+import 'package:shoppinglist/screens/create_list_screen.dart';
 import 'package:shoppinglist/screens/the_list_screen.dart';
 
 class ListTitles extends StatefulWidget {
@@ -17,7 +13,7 @@ class ListTitles extends StatefulWidget {
 
 class ListTitlesState extends State<ListTitles> {
   User? _user;
-  List<Map<String, dynamic>> shopListTitles = [];
+  List<Map<String, dynamic>> listTitles = [];
   List<bool> isOpen = [];
   late QuerySnapshot snapshot;
 
@@ -28,30 +24,32 @@ class ListTitlesState extends State<ListTitles> {
     var subCollectionRef = FirebaseFirestore.instance
         .collection('users')
         .doc("${_user?.uid}")
-        .collection('shoplists');
+        .collection('lists');
     if (!(_user?.uid == null)) {
       subCollectionRef.snapshots().listen((querySnapshot) {
         snapshot = querySnapshot;
-        List<Map<String, dynamic>> newShopListTitles = [];
+        List<Map<String, dynamic>> newListTitles = [];
 
         querySnapshot.docs
             .where((doc) => doc.data()['finished'] == false)
             .forEach((doc) {
-          newShopListTitles.add({
+          newListTitles.add({
             'creator': doc.data()['creator'],
             'title': doc.data()['title'],
             'date': doc.data()['date'],
             'list': doc.data()['list'],
-            'docId': doc.id // Add the doc id to the map
+            'docId': doc.id,
+            'color': doc.data()['color'],
+            'textColor': doc.data()['textColor'],
           });
         });
         setState(() {
-          shopListTitles = newShopListTitles;
-          isOpen = List<bool>.generate(shopListTitles.length, (index) => false);
+          listTitles = newListTitles;
+          isOpen = List<bool>.generate(listTitles.length, (index) => false);
         });
       });
     } else {
-      shopListTitles = [];
+      listTitles = [];
     }
   }
 
@@ -59,7 +57,7 @@ class ListTitlesState extends State<ListTitles> {
     var subCollectionRef = FirebaseFirestore.instance
         .collection('users')
         .doc("${_user?.uid}")
-        .collection('shoplists')
+        .collection('lists')
         .doc(docId);
     subCollectionRef.delete();
   }
@@ -68,167 +66,172 @@ class ListTitlesState extends State<ListTitles> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16.0),
-      child: shopListTitles.isNotEmpty
+      child: listTitles.isNotEmpty
           ? ListView.builder(
-              itemCount: shopListTitles.length,
+              itemCount: listTitles.length,
               addAutomaticKeepAlives: true,
               itemBuilder: (BuildContext context, int index) {
-                var docId = shopListTitles[index]
-                    ['docId']; // Get the doc id from the map
+                var docId = listTitles[index]['docId'];
+                Color backgroundColor =
+                    parseColor(listTitles[index]['color']) ??
+                        const Color.fromARGB(255, 20, 67, 117);
+                Color textColor =
+                    parseColor(listTitles[index]['textColor']) ?? Colors.white;
                 return Column(
                   children: [
                     TextButton(
                       onPressed: () {
                         Navigator.push(
-                            context,
-                            MaterialPageRoute<void>(
-                              builder: (BuildContext context) => TheListScreen(
-                                creator: shopListTitles[index]['creator'],
-                                title: shopListTitles[index]['title'],
-                                list: shopListTitles[index]['list'],
+                          context,
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext context) => TheListScreen(
+                                creator: listTitles[index]['creator'],
+                                title: listTitles[index]['title'],
+                                list: listTitles[index]['list'],
                                 docId: docId,
                                 uid: "${_user?.uid}",
-                              ),
-                            ));
+                                color: backgroundColor,
+                                textColor: textColor),
+                          ),
+                        );
                       },
-                      child: Container(
+                      child: Material(
+                        elevation: 8,
+                        shadowColor: backgroundColor,
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color.fromARGB(255, 0, 64, 255),
-                                Color.fromARGB(255, 0, 128, 255)
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.grey, // Shadow color
-                                offset: Offset(0,
-                                    2), // Horizontal and vertical offset of the shadow
-                                blurRadius: 4.0, // Spread radius of the shadow
-                                spreadRadius:
-                                    0.0, // Extent of the shadow (positive values expand the shadow, negative values shrink it)
+                              color: const Color.fromARGB(255, 34, 34, 34),
+                              // border: Border.all(
+                              //   color: Colors.black,
+                              //   width: 2,
+                              // ),
+                              borderRadius: BorderRadius.circular(10)),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Container(
+                                height: 30,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                    color: backgroundColor,
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(6))),
+                                alignment: AlignmentDirectional.center,
+                                child: Text(
+                                  listTitles[index]["title"],
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      deleteList(docId);
+                                    },
+                                    icon: const Icon(
+                                      Icons.more_vert,
+                                    ),
+                                    color: Colors.white,
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          listTitles[index]['title'],
+                                          textDirection: TextDirection.rtl,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 24,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Row(
+                                  textDirection: TextDirection.rtl,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "${listTitles[index]['creator']?.toString().substring(0, listTitles[index]['creator'].toString().indexOf('@'))} :יוצר",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(
+                                        "${listTitles[index]['date']?.toString()}",
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700)),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    IconButton(
-                                        onPressed: () {},
-                                        icon: const Icon(
-                                          Icons.delete,
-                                        ),
-                                        color: Colors.white),
-                                    Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            shopListTitles[index]['title'],
-                                            textDirection: TextDirection.rtl,
-                                            style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 24),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    IconButton(
-                                        onPressed: () {},
-                                        icon: const Icon(
-                                          Icons.edit,
-                                        ),
-                                        color: Colors.white),
-                                    Text(
-                                      "${shopListTitles[index]['date']?.toString()}    "
-                                      "${shopListTitles[index]['creator']?.toString().substring(0, shopListTitles[index]['creator'].toString().indexOf('@'))} :יוצר",
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          )
-                          // child: TextButton(
-                          //   onPressed: () {
-                          //     Navigator.push(
-                          //         context,
-                          //         MaterialPageRoute<void>(
-                          //           builder: (BuildContext context) =>
-                          //               TheListScreen(
-                          //             creator: shopListTitles[index]['creator'],
-                          //             title: shopListTitles[index]['title'],
-                          //             list: shopListTitles[index]['list'],
-                          //             docId: docId,
-                          //             uid: "${_user?.uid}",
-                          //           ),
-                          //         ));
-                          //   },
-                          //   child: ListTile(
-                          //     trailing: Text(
-                          //       "${shopListTitles[index]['creator']?.toString().substring(0, shopListTitles[index]['creator'].toString().indexOf('@'))} :יוצר",
-                          //       style: const TextStyle(
-                          //           color: Colors.white,
-                          //           fontWeight: FontWeight.w700),
-                          //     ),
-                          //     title: Text(
-                          //       shopListTitles[index]['title'],
-                          //       textDirection: TextDirection.rtl,
-                          //       style: const TextStyle(
-                          //           color: Colors.white,
-                          //           fontWeight: FontWeight.w700),
-                          //     ),
-                          //     subtitle: Text(
-                          //       shopListTitles[index]['date'],
-                          //       textDirection: TextDirection.rtl,
-                          //       style: TextStyle(color: Colors.grey.shade50),
-                          //     ),
-                          //     leading: SizedBox(
-                          //       width: 100,
-                          //       child: Row(
-                          //         children: [
-                          //           IconButton(
-                          //             onPressed: () {
-                          //               deleteList(docId);
-                          //             },
-                          //             icon: const Icon(Icons.delete,
-                          //                 color: Colors.white, size: 24),
-                          //           ),
-                          //         ],
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
-                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(
-                      height: 10,
-                    )
                   ],
                 );
               },
             )
-          : const SizedBox(),
+          : TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) => const CreateListScreen(),
+                  ),
+                );
+              },
+              child: const SizedBox(
+                child: Center(
+                  child: Text(
+                    "לחץ על רשימה חדשה או הקש על המסך בשביל ליצור רשימת קניות ",
+                    textDirection: TextDirection.rtl,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.w200,
+                      color: Color.fromARGB(255, 118, 108, 108),
+                    ),
+                  ),
+                ),
+              ),
+            ),
     );
+  }
+
+  Color? parseColor(String? colorString) {
+    if (colorString != null && colorString.isNotEmpty) {
+      try {
+        if (colorString.startsWith('#')) {
+          return Color(
+              int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+        } else {
+          return Color(int.parse(colorString));
+        }
+      } catch (e) {
+        print('Error parsing color: $e');
+      }
+    }
+    return null;
   }
 }

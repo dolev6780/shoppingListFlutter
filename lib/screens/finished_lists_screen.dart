@@ -91,6 +91,7 @@ class _FinishedListsScreenState extends State<FinishedListsScreen> {
           child: Appbar(
             title: "היסטוריית רשימות",
             backBtn: true,
+            color: Color.fromARGB(255, 20, 67, 117),
           )),
       body: Container(
         padding: const EdgeInsets.all(16.0),

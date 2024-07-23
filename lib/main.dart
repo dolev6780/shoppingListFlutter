@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shoppinglist/screens/home_screen.dart';
+import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shoppinglist/services/auth_provider.dart';
+import 'package:shoppinglist/services/wrapper.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -8,19 +11,28 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      title: 'Shopping List',
-      home: HomeScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthProviding>(
+          create: (_) => AuthProviding(),
+        ),
+        StreamProvider<User?>(
+          create: (context) => context.read<AuthProviding>().authStateChanges,
+          initialData: null,
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Shopping List',
+        home: Wrapper(),
+      ),
     );
   }
 }

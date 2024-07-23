@@ -12,15 +12,18 @@ class TheListScreen extends StatefulWidget {
   final List list;
   final String docId;
   final String uid;
-
-  const TheListScreen({
-    Key? key,
-    required this.creator,
-    required this.title,
-    required this.list,
-    required this.docId,
-    required this.uid,
-  }) : super(key: key);
+  final Color color;
+  final Color textColor;
+  const TheListScreen(
+      {Key? key,
+      required this.creator,
+      required this.title,
+      required this.list,
+      required this.docId,
+      required this.uid,
+      required this.color,
+      required this.textColor})
+      : super(key: key);
 
   @override
   State<TheListScreen> createState() => _TheListScreenState();
@@ -109,11 +112,13 @@ class _TheListScreenState extends State<TheListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color.fromARGB(255, 34, 34, 34),
       appBar: PreferredSize(
           preferredSize: const Size.fromHeight(kToolbarHeight),
           child: Appbar(
             title: widget.title,
             backBtn: true,
+            color: widget.color,
           )),
       body: Stack(
         children: [
@@ -177,35 +182,10 @@ class _TheListScreenState extends State<TheListScreen> {
           ),
         ],
       ),
-      bottomSheet: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton(
-              heroTag: "editButton",
-              onPressed: () {
-                // Perform some action for the "Edit" button if needed.
-                // For example, you could open a dialog to edit the list.
-              },
-              child: const Icon(Icons.edit),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: finishedList == true
-          ? FloatingActionButton.extended(
-              heroTag: "addConnectionButton",
-              onPressed: () async {
-                finishList();
-              },
-              label: const Text(
-                'סיים רשימה',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButton: FloatingActionButton(
+          onPressed: () => {},
+          child: Icon(Icons.add),
+          backgroundColor: widget.color),
     );
   }
 }
