@@ -8,7 +8,6 @@ import 'package:shoppinglist/components/connection_requests_list.dart';
 import 'package:shoppinglist/components/send_connections_list.dart';
 import 'package:shoppinglist/screens/finished_lists_screen.dart';
 import 'package:shoppinglist/screens/home_screen.dart';
-import '../components/bottom_navigation.dart';
 import '../components/my_connections_list.dart';
 
 class MyConnectionsScreen extends StatefulWidget {
@@ -60,33 +59,6 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen>
     }
   }
 
-  int _currentIndex = 1;
-
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-
-    switch (_currentIndex) {
-      case 0:
-        Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => const HomeScreen(),
-            ));
-        break;
-      case 1:
-        break;
-      case 2:
-        Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => const FinishedListsScreen(),
-            ));
-        break;
-    }
-  }
-
   @override
   void dispose() {
     _tabController.dispose();
@@ -132,24 +104,6 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen>
             child: MyConnectionsList(myConnections: myConnections),
           )
         ],
-      ),
-      bottomNavigationBar: GradientBottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'עמוד הבית',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'אנשי הקשר שלי',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_rounded),
-            label: 'היסטוריית רשימות',
-          ),
-        ],
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {

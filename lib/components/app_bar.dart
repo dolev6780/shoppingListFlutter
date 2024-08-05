@@ -20,8 +20,12 @@ class Appbar extends StatelessWidget {
       ),
       centerTitle: true,
       automaticallyImplyLeading: backBtn,
-      title: Text(title),
+      title: Text(
+        title,
+        style: const TextStyle(color: Colors.white),
+      ),
       backgroundColor: color,
+      iconTheme: const IconThemeData(color: Colors.white),
     );
   }
 }

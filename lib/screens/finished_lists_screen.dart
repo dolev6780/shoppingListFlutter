@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:shoppinglist/screens/home_screen.dart';
 
 import '../components/app_bar.dart';
-import '../components/bottom_navigation.dart';
 import 'my_connections_screen.dart';
 
 class FinishedListsScreen extends StatefulWidget {
@@ -132,24 +131,6 @@ class _FinishedListsScreenState extends State<FinishedListsScreen> {
                 },
               )
             : const SizedBox(),
-      ),
-      bottomNavigationBar: GradientBottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'עמוד הבית',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'אנשי הקשר שלי',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_rounded),
-            label: 'היסטוריית רשימות',
-          ),
-        ],
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
       ),
     );
   }

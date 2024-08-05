@@ -3,13 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'auth_service.dart';
+import 'package:shoppinglist/screens/home_screen.dart';
 
-class CreateNewList {
-  Color _currentColor = const Color.fromARGB(255, 20, 67, 117);
-  Color _currentTextColor = Colors.white;
+class EditList {
+  Color _currentColor;
+  Color _currentTextColor;
   bool _expanded = false;
-  final TextEditingController listTitle = TextEditingController();
+  final TextEditingController listTitle;
   bool _listTitleWarning = false;
   Timer? _warningTimer;
   final List<Color> _colors = [
@@ -22,20 +22,19 @@ class CreateNewList {
     Colors.tealAccent,
   ];
 
-  final List<Color> _textColors = [
-    Colors.white,
-    Colors.black,
-    Colors.white,
-    Colors.black,
-    Colors.black,
-    Colors.white,
-    Colors.black,
-  ];
-  final AuthService _authService = AuthService();
+  final String listId;
+
+  EditList({
+    required this.listId,
+    required String initialTitle,
+    required Color initialColor,
+    required Color initialTextColor,
+  })  : _currentColor = initialColor,
+        _currentTextColor = initialTextColor,
+        listTitle = TextEditingController(text: initialTitle);
 
   void showAlertDialog(BuildContext context) {
     Color selectedColor = _currentColor;
-    Color selectedTextColor = _currentTextColor;
 
     showDialog<String>(
       context: context,
@@ -44,7 +43,7 @@ class CreateNewList {
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
               elevation: 8,
-              backgroundColor: selectedColor,
+              backgroundColor: Colors.white,
               actionsAlignment: MainAxisAlignment.center,
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -55,14 +54,14 @@ class CreateNewList {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            title: Text('Blank Popup'),
-                            content: Text('This is a blank popup.'),
+                            title: const Text('Blank Popup'),
+                            content: const Text('This is a blank popup.'),
                             actions: <Widget>[
                               TextButton(
                                 onPressed: () {
                                   Navigator.pop(context);
                                 },
-                                child: Text('Close'),
+                                child: const Text('Close'),
                               ),
                             ],
                           );
@@ -71,15 +70,15 @@ class CreateNewList {
                     },
                     icon: Icon(
                       Icons.group_add,
-                      color: selectedTextColor,
+                      color: selectedColor,
                     ),
                   ),
                   Directionality(
                     textDirection: TextDirection.rtl,
                     child: Text(
-                      'רשימה חדשה',
+                      'ערוך רשימה',
                       style: TextStyle(
-                          color: selectedTextColor,
+                          color: selectedColor,
                           fontWeight: FontWeight.bold,
                           fontSize: 24),
                     ),
@@ -102,19 +101,18 @@ class CreateNewList {
                           controller: listTitle,
                           decoration: InputDecoration(
                             hintText: "שם הרשימה",
-                            hintStyle: TextStyle(color: selectedTextColor),
-                            labelStyle: TextStyle(color: selectedTextColor),
-                            floatingLabelStyle:
-                                TextStyle(color: selectedTextColor),
+                            hintStyle: TextStyle(color: selectedColor),
+                            labelStyle: TextStyle(color: selectedColor),
+                            floatingLabelStyle: TextStyle(color: selectedColor),
                             enabledBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: selectedTextColor),
+                              borderSide: BorderSide(color: selectedColor),
                             ),
                             focusedBorder: UnderlineInputBorder(
-                              borderSide: BorderSide(color: selectedTextColor),
+                              borderSide: BorderSide(color: selectedColor),
                             ),
                           ),
                           textAlign: TextAlign.right,
-                          style: TextStyle(color: selectedTextColor),
+                          style: TextStyle(color: selectedColor),
                         ),
                       ),
                     ),
@@ -167,9 +165,7 @@ class CreateNewList {
                                     onTap: () {
                                       setState(() {
                                         selectedColor = _colors[index];
-                                        selectedTextColor = _textColors[index];
                                         _currentColor = selectedColor;
-                                        _currentTextColor = selectedTextColor;
                                       });
                                     },
                                     child: Container(
@@ -206,7 +202,7 @@ class CreateNewList {
                                     )
                                   : Icon(
                                       Icons.close,
-                                      color: selectedTextColor,
+                                      color: selectedColor,
                                     ),
                             ),
                           ],
@@ -221,16 +217,18 @@ class CreateNewList {
                   onPressed: () => Navigator.pop(context, 'Cancel'),
                   child: Text(
                     'בטל',
-                    style: TextStyle(color: selectedTextColor),
+                    style: TextStyle(
+                        color: selectedColor, fontWeight: FontWeight.bold),
                   ),
                 ),
                 TextButton(
                   onPressed: () {
-                    createList(context, setState);
+                    editList(context, setState);
                   },
                   child: Text(
-                    'צור רשימה',
-                    style: TextStyle(color: selectedTextColor),
+                    'עדכן רשימה',
+                    style: TextStyle(
+                        color: selectedColor, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -241,15 +239,14 @@ class CreateNewList {
     );
   }
 
-  void createList(BuildContext context, StateSetter setState) async {
+  void editList(BuildContext context, StateSetter setState) async {
     final User? user = Provider.of<User?>(context, listen: false);
     final String email = user != null ? user.email.toString() : " ";
 
-    List<Map<String, dynamic>> data = [];
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     final CollectionReference collectionRef = firestore.collection("users");
     final DocumentReference userDocRef =
-        collectionRef.doc("${user?.uid}").collection("lists").doc();
+        collectionRef.doc("${user?.uid}").collection("lists").doc(listId);
 
     var day = DateTime.now().day < 10
         ? "0${DateTime.now().day}"
@@ -265,20 +262,23 @@ class CreateNewList {
     final docData = {
       "creator": email,
       "title": listTitle.text,
-      "list": data,
       "date": date,
-      "finished": false,
       "color": currentColorHex,
       "textColor": currentTextColorHex
     };
 
     if (email.isNotEmpty && listTitle.text.isNotEmpty) {
       try {
-        await userDocRef.set(docData);
+        await userDocRef.update(docData);
 
-        Navigator.pop(context, 'OK');
+        Navigator.push(
+          context,
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) => const HomeScreen(),
+          ),
+        );
       } catch (e) {
-        print("Error creating list: $e");
+        print("Error updating list: $e");
       }
     } else {
       setState(() {

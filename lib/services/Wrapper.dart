@@ -4,9 +4,10 @@ import 'package:provider/provider.dart';
 import 'package:shoppinglist/screens/home_screen.dart';
 import 'package:shoppinglist/screens/signin_screen.dart';
 import 'package:shoppinglist/services/auth_provider.dart';
-import 'package:shoppinglist/services/auth_service.dart';
 
 class Wrapper extends StatelessWidget {
+  const Wrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProviding>(context);

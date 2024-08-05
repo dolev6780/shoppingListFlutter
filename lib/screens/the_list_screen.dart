@@ -1,10 +1,9 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:shoppinglist/components/bottom_modal_create_item.dart';
+import 'package:shoppinglist/components/edit_item.dart';
 import '../components/app_bar.dart';
-import 'home_screen.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class TheListScreen extends StatefulWidget {
   final String creator;
@@ -14,178 +13,255 @@ class TheListScreen extends StatefulWidget {
   final String uid;
   final Color color;
   final Color textColor;
-  const TheListScreen(
-      {Key? key,
-      required this.creator,
-      required this.title,
-      required this.list,
-      required this.docId,
-      required this.uid,
-      required this.color,
-      required this.textColor})
-      : super(key: key);
+
+  const TheListScreen({
+    Key? key,
+    required this.creator,
+    required this.title,
+    required this.list,
+    required this.docId,
+    required this.uid,
+    required this.color,
+    required this.textColor,
+  }) : super(key: key);
 
   @override
   State<TheListScreen> createState() => _TheListScreenState();
 }
 
 class _TheListScreenState extends State<TheListScreen> {
-  bool finishedList = false;
+  List<dynamic> listItems = [];
+  int checkedCount = 0;
+  final EditItem _editItem = EditItem();
 
   @override
   void initState() {
     super.initState();
-    setState(() {
-      _checkFinishedList();
-    });
+    refreshList();
   }
 
   Future<void> updateSubcollectionField() async {
     try {
-      // Get a reference to the document that contains the subcollection
       var docRef =
           FirebaseFirestore.instance.collection('users').doc(widget.uid);
-
-      // Get a reference to the subcollection
-      var subcollectionRef = docRef.collection('shoplists');
-
-      // Update the field in the subcollection document
-      await subcollectionRef.doc(widget.docId).update({'list': widget.list});
-      if (widget.list.isEmpty) {
-        await subcollectionRef.doc(widget.docId).delete();
-        // ignore: use_build_context_synchronously
-        await Navigator.push(
-          context,
-          MaterialPageRoute<void>(
-            builder: (BuildContext context) => const HomeScreen(),
-          ),
-        );
-      }
+      var subcollectionRef = docRef.collection('lists');
+      await subcollectionRef.doc(widget.docId).update({'list': listItems});
+      print("Updated Firestore with list items");
     } catch (e) {
       print('Error updating subcollection field: $e');
     }
   }
 
-  Future<void> finishList() async {
+  Future<void> refreshList() async {
     try {
       var docRef =
           FirebaseFirestore.instance.collection('users').doc(widget.uid);
-      var subcollectionRef = docRef.collection('shoplists');
-
-      await subcollectionRef.doc(widget.docId).update({'finished': true});
-
-      // Navigate to the HomeScreen after updating the collection
-      // ignore: use_build_context_synchronously
-      await Navigator.push(
-        context,
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const HomeScreen(),
-        ),
-      );
+      var subcollectionRef = docRef.collection('lists');
+      var documentSnapshot = await subcollectionRef.doc(widget.docId).get();
+      setState(() {
+        listItems = documentSnapshot.data()?['list'] ?? [];
+        checkedCount =
+            listItems.where((item) => item['checked'] == true).length;
+        print("Refreshed list items: $listItems");
+      });
     } catch (e) {
-      print('Error updating subcollection field: $e');
+      print('Error refreshing list: $e');
     }
   }
 
-  void _checkFinishedList() {
-    for (var i = 0; i < widget.list.length; i++) {
-      if (widget.list[i]['checked'] == false) {
-        setState(() {
-          finishedList = false;
-        });
-        return;
-      }
-    }
+  void _onCheckboxChanged(bool? value, int index) {
     setState(() {
-      finishedList = true;
+      listItems[index]['checked'] = value;
+      checkedCount = listItems.where((item) => item['checked'] == true).length;
     });
-  }
-
-  void _onItemChecked(int index) {
-    setState(() {
-      widget.list[index]['checked'] = !widget.list[index]['checked'];
-    });
-    _checkFinishedList();
     updateSubcollectionField();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromARGB(255, 34, 34, 34),
       appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: Appbar(
-            title: widget.title,
-            backBtn: true,
-            color: widget.color,
-          )),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Appbar(
+          title: widget.title,
+          backBtn: true,
+          color: widget.color,
+        ),
+      ),
       body: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 20, 8, 90),
+            padding: const EdgeInsets.only(top: 20),
             child: ListView.builder(
-              itemCount: widget.list.length,
+              itemCount: listItems.length,
               itemBuilder: (context, index) {
-                return ListTile(
-                  onTap: () {
-                    setState(() {
-                      _onItemChecked(index);
-                    });
-                  },
-                  tileColor: index % 2 != 0
-                      ? Colors.blueGrey.shade100
-                      : Colors.blue.shade200,
-                  title: Row(
+                var item = listItems[index];
+                Duration animationDelay = Duration(milliseconds: 100 * index);
+                return Animate(
+                  effects: const [FadeEffect()],
+                  delay: animationDelay,
+                  child: Directionality(
                     textDirection: TextDirection.rtl,
-                    children: [
-                      widget.list[index]['checked'] == true
-                          ? const Icon(
-                              Icons.check,
-                              color: Colors.green,
-                            )
-                          : const Text(''),
-                      const SizedBox(width: 10),
-                      CircleAvatar(
-                        backgroundColor: widget.list[index]['checked'] == true
-                            ? Colors.green
-                            : Colors.blue,
-                        radius: 15,
-                        child: Text(widget.list[index]['qty'].toString()),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        widget.list[index]['item'].toString(),
-                        style: TextStyle(
-                          color: widget.list[index]['checked'] == true
-                              ? Colors.green
-                              : Colors.white,
-                          fontWeight: widget.list[index]['checked'] == true
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: const [
+                                  BoxShadow(
+                                      blurRadius: 4,
+                                      color: Color.fromARGB(255, 151, 151, 151),
+                                      offset: Offset(0, 2))
+                                ],
+                                color: Colors.white),
+                            child: ListTile(
+                              leading: Checkbox(
+                                value: listItems[index]['checked'],
+                                onChanged: (bool? value) {
+                                  _onCheckboxChanged(value, index);
+                                },
+                                shape: const CircleBorder(),
+                                activeColor: widget.color,
+                                checkColor: widget.color,
+                              ),
+                              title: GestureDetector(
+                                onTap: () {
+                                  bool? currentValue =
+                                      listItems[index]['checked'];
+                                  _onCheckboxChanged(!currentValue!, index);
+                                },
+                                child: Container(
+                                  alignment: Alignment.centerRight,
+                                  decoration: const BoxDecoration(),
+                                  child: Text(
+                                    item['item'],
+                                    style: TextStyle(
+                                        color: listItems[index]['checked']
+                                            ? widget.color
+                                            : Colors.black,
+                                        fontWeight: listItems[index]['checked']
+                                            ? FontWeight.bold
+                                            : FontWeight.normal),
+                                  ),
+                                ),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit,
+                                        color: Colors.black),
+                                    onPressed: () => _editItem.showAlertDialog(
+                                      context,
+                                      widget.color,
+                                      widget.docId,
+                                      refreshList,
+                                      listItems[index]['item'],
+                                      index,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.black),
+                                    onPressed: () async {
+                                      setState(() {
+                                        listItems.removeAt(index);
+                                        checkedCount = listItems
+                                            .where((item) =>
+                                                item['checked'] == true)
+                                            .length;
+                                      });
+                                      await updateSubcollectionField();
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  leading: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        widget.list.removeAt(index);
-                        updateSubcollectionField();
-                      });
-                    },
-                    icon: const Icon(Icons.delete),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
           ),
+          if (listItems.length == checkedCount)
+            Animate(
+              effects: const [
+                SlideEffect(
+                  begin: Offset(0, 1),
+                  end: Offset(0, 0),
+                  duration: Duration(milliseconds: 300),
+                ),
+              ],
+              child: Positioned(
+                bottom: 20,
+                left: 10,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: widget.color,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                        blurRadius: 4,
+                        color: Color.fromARGB(255, 202, 202, 202),
+                      ),
+                    ],
+                  ),
+                  child: TextButton(
+                    onPressed: () => {},
+                    child: const Text(
+                      "סיים רשימה",
+                      style: TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            )
+          else
+            Positioned(
+              bottom: 20,
+              left: 10,
+              child: Container(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    "$checkedCount :משימות שבוצעו",
+                    style: TextStyle(
+                      color: widget.color,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
-          onPressed: () => {},
-          child: Icon(Icons.add),
-          backgroundColor: widget.color),
+        shape: const CircleBorder(),
+        tooltip: "צור משימה",
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            builder: (context) => BottomModalCreateItem(
+              color: widget.color,
+              docId: widget.docId,
+              onItemCreated: refreshList,
+            ),
+          );
+        },
+        backgroundColor: widget.color,
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
+      ),
     );
   }
 }

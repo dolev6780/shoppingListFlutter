@@ -29,8 +29,8 @@ class MyApp extends StatelessWidget {
           initialData: null,
         ),
       ],
-      child: MaterialApp(
-        title: 'Shopping List',
+      child: const MaterialApp(
+        title: 'List',
         home: Wrapper(),
       ),
     );
