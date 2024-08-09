@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shoppinglist/components/popup_connections.dart';
 
 class BottomModalCreateList extends StatefulWidget {
   final VoidCallback onListCreated;
@@ -19,6 +20,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
   final TextEditingController listTitle = TextEditingController();
   bool warning = false;
   Timer? _warningTimer;
+  final List<String> selectedUIDs = [];
   final List<Color> _colors = [
     const Color.fromARGB(255, 20, 67, 117),
     Colors.red,
@@ -29,17 +31,19 @@ class _BottomModalState extends State<BottomModalCreateList> {
     Colors.tealAccent,
   ];
 
+  @override
+  void dispose() {
+    listTitle.dispose();
+    _warningTimer?.cancel();
+    super.dispose();
+  }
+
   void createList() async {
     final User? user = Provider.of<User?>(context, listen: false);
     final String email = user?.email ?? "";
-    List<Map<String, dynamic>> data = [];
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    final DocumentReference userDocRef = firestore
-        .collection("users")
-        .doc("${user?.uid}")
-        .collection("lists")
-        .doc();
 
+    // Prepare the list data
     var day = DateTime.now().day < 10
         ? "0${DateTime.now().day}"
         : "${DateTime.now().day}";
@@ -53,17 +57,40 @@ class _BottomModalState extends State<BottomModalCreateList> {
     final docData = {
       "creator": email,
       "title": listTitle.text,
-      "list": data,
+      "list": [], // Assuming list is empty initially
       "date": date,
       "finished": false,
       "color": currentColorHex,
+      "sharedWith": selectedUIDs, // Ensure this is a list of strings
     };
 
+    // Ensure the list has a title and email is available
     if (email.isNotEmpty && listTitle.text.isNotEmpty) {
       try {
+        // Create the list for the current user
+        final DocumentReference userDocRef = firestore
+            .collection("users")
+            .doc(user?.uid)
+            .collection("lists")
+            .doc();
+
         await userDocRef.set(docData);
-        Navigator.pop(context); // Close modal
-        widget.onListCreated(); // Notify parent
+
+        // Create the list for each selected user
+        for (var uid in selectedUIDs) {
+          print(uid.substring(1, uid.length - 1));
+          // final DocumentReference otherUserDocRef = firestore
+          //     .collection("users")
+          //     .doc(uid.substring(1, uid.length - 1))
+          //     .collection("lists")
+          //     .doc();
+
+          // await otherUserDocRef.set(docData);
+        }
+
+        Navigator.pop(context);
+        widget.onListCreated();
+        listTitle.clear();
       } catch (e) {
         print("Error creating list: $e");
       }
@@ -84,7 +111,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
   Widget build(BuildContext context) {
     final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     double screenHeight = MediaQuery.of(context).size.height;
-    Color selectedColor = _currentColor;
+
     return GestureDetector(
       child: Container(
         padding: const EdgeInsets.all(16.0),
@@ -95,12 +122,35 @@ class _BottomModalState extends State<BottomModalCreateList> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'רשימה חדשה',
-              style: TextStyle(
-                  color: selectedColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    IconButton(
+                      onPressed: () {
+                        PopupConnections()
+                            .showAlertDialog(context, selectedUIDs);
+                      },
+                      icon: Icon(
+                        Icons.people,
+                        color: _currentColor,
+                      ),
+                    ),
+                    Expanded(child: Container()),
+                  ],
+                ),
+                Text(
+                  'רשימה חדשה',
+                  style: TextStyle(
+                    color: _currentColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
             Column(
               mainAxisSize: MainAxisSize.min,
@@ -118,19 +168,19 @@ class _BottomModalState extends State<BottomModalCreateList> {
                         decoration: InputDecoration(
                           hintText: "שם הרשימה",
                           hintStyle: TextStyle(
-                              color: selectedColor,
+                              color: _currentColor,
                               fontWeight: FontWeight.bold),
-                          labelStyle: TextStyle(color: selectedColor),
-                          floatingLabelStyle: TextStyle(color: selectedColor),
+                          labelStyle: TextStyle(color: _currentColor),
+                          floatingLabelStyle: TextStyle(color: _currentColor),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: selectedColor),
+                            borderSide: BorderSide(color: _currentColor),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: selectedColor),
+                            borderSide: BorderSide(color: _currentColor),
                           ),
                         ),
                         textAlign: TextAlign.right,
-                        style: TextStyle(color: selectedColor),
+                        style: TextStyle(color: _currentColor),
                       ),
                     ),
                   ),
@@ -181,8 +231,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
                                 return GestureDetector(
                                   onTap: () {
                                     setState(() {
-                                      selectedColor = _colors[index];
-                                      _currentColor = selectedColor;
+                                      _currentColor = _colors[index];
                                     });
                                   },
                                   child: Container(
@@ -192,7 +241,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
                                     decoration: BoxDecoration(
                                       color: _colors[index],
                                       shape: BoxShape.circle,
-                                      border: selectedColor == _colors[index]
+                                      border: _currentColor == _colors[index]
                                           ? Border.all(
                                               color: Colors.black, width: 2.0)
                                           : null,
@@ -219,7 +268,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
                                   )
                                 : Icon(
                                     Icons.close,
-                                    color: selectedColor,
+                                    color: _currentColor,
                                   ),
                           ),
                         ],
@@ -236,7 +285,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
                   child: Text(
                     'בטל',
                     style: TextStyle(
-                        color: selectedColor, fontWeight: FontWeight.bold),
+                        color: _currentColor, fontWeight: FontWeight.bold),
                   ),
                 ),
                 TextButton(
@@ -244,7 +293,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
                   child: Text(
                     'צור רשימה',
                     style: TextStyle(
-                        color: selectedColor, fontWeight: FontWeight.bold),
+                        color: _currentColor, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

@@ -3,12 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shoppinglist/screens/add_connection_screen.dart';
-import 'package:shoppinglist/components/connection_requests_list.dart';
-import 'package:shoppinglist/components/send_connections_list.dart';
-import 'package:shoppinglist/screens/finished_lists_screen.dart';
-import 'package:shoppinglist/screens/home_screen.dart';
-import '../components/my_connections_list.dart';
+import 'package:shoppinglist/components/bottom_modal_add_connection.dart';
 
 class MyConnectionsScreen extends StatefulWidget {
   const MyConnectionsScreen({super.key});
@@ -22,22 +17,17 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen>
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  List myConnections = [];
-  List connectionRequest = [];
-  List sendConnections = [];
-  late TabController _tabController;
+  List connections = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: 1);
+
     getConnectionLists();
   }
 
   void getConnectionLists() async {
-    myConnections = [];
-    connectionRequest = [];
-    sendConnections = [];
+    connections = [];
 
     if (_auth.currentUser != null) {
       var collectionRef =
@@ -46,12 +36,26 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen>
       await collectionRef.get().then(
         (doc) {
           if (doc.exists) {
-            setState(() {
-              myConnections.addAll(doc.data()?['connections'] ?? []);
-              connectionRequest
-                  .addAll(doc.data()?['connectionsrequests'] ?? []);
-              sendConnections.addAll(doc.data()?['sendconnections'] ?? []);
-            });
+            List<String> connectionIds =
+                List<String>.from(doc.data()?['connections'] ?? []);
+            if (connectionIds.isNotEmpty) {
+              Future.wait(connectionIds.map((id) async {
+                var userDoc =
+                    await _firestore.collection('users').doc(id).get();
+                if (userDoc.exists) {
+                  var userData = userDoc.data();
+                  if (userData != null) {
+                    setState(() {
+                      connections.add(userData);
+                      print(connections);
+                    });
+                  }
+                }
+              })).then((_) {
+                // Once all user data is fetched, you can update the state
+                setState(() {});
+              });
+            }
           }
         },
         onError: (e) => print("Error getting document: $e"),
@@ -60,128 +64,62 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen>
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    Color color = const Color.fromARGB(255, 20, 67, 117);
+    Color textColor = Colors.white;
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF3366FF), Color(0xFF00CCFF)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
+          decoration: BoxDecoration(color: color),
         ),
-        title: const Text('אנשי הקשר שלי'),
+        title: Text(
+          'אנשי הקשר שלי',
+          style: TextStyle(color: textColor),
+        ),
         centerTitle: true,
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const <Widget>[
-            Tab(
-              icon: Icon(Icons.input),
-              text: 'בקשות',
-            ),
-            Tab(
-              icon: Icon(Icons.contacts),
-              text: 'אנשי הקשר שלי',
-            ),
-          ],
-        ),
+        iconTheme: IconThemeData(color: textColor),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: <Widget>[
-          NestedTabBar(
-              connectionRequest: connectionRequest,
-              sendConnections: sendConnections),
-          Center(
-            child: MyConnectionsList(myConnections: myConnections),
-          )
-        ],
-      ),
+      body: connections.isEmpty
+          ? const Center(
+              child:
+                  CircularProgressIndicator()) // Show loading indicator while fetching
+          : ListView.builder(
+              itemCount: connections.length,
+              itemBuilder: (context, index) {
+                var connection = connections[index];
+                print(connection);
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: const Color.fromARGB(255, 20, 67, 117),
+                        child: Text(
+                          connection['displayName'][0].toString().toUpperCase(),
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      title: Text(
+                        connection['displayName'],
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => const AddConnectionScreen(),
-            ),
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            builder: (context) => const BottomModalAddConnection(),
           );
         },
         label: const Text("הוסף איש קשר"),
       ),
-    );
-  }
-}
-
-class NestedTabBar extends StatefulWidget {
-  final List connectionRequest;
-  final List sendConnections;
-  const NestedTabBar(
-      {super.key,
-      required this.connectionRequest,
-      required this.sendConnections});
-  @override
-  State<NestedTabBar> createState() => _NestedTabBarState();
-}
-
-class _NestedTabBarState extends State<NestedTabBar>
-    with TickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this, initialIndex: 1);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: <Widget>[
-        TabBar(
-          controller: _tabController,
-          tabs: const <Widget>[
-            Tab(
-                child: Text(
-              'בקשות שהתקבלו',
-              style: TextStyle(color: Colors.black),
-            )),
-            Tab(
-                child: Text(
-              'בקשות שנשלחו',
-              style: TextStyle(color: Colors.black),
-            )),
-          ],
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: <Widget>[
-              Card(
-                child: ConnectionRequestsList(
-                    connectionRequest: widget.connectionRequest),
-              ),
-              Card(
-                child: SendConnectionsList(
-                    sendConnections: widget.sendConnections),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }

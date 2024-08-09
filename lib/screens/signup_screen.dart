@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shoppinglist/screens/signin_screen.dart';
 import 'package:text_divider/text_divider.dart';
 
@@ -17,10 +15,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final AuthService _authService = AuthService();
 
   bool _isSigningUp = false;
   String _email = "";
+  String _name = "";
 
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@[a-zA-Z\d\.-]+\.[a-zA-Z]{2,}$').hasMatch(email);
@@ -71,6 +71,47 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                     const SizedBox(height: 40),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20, right: 20),
+                      child: TextFormField(
+                        controller: _nameController,
+                        onChanged: (value) {
+                          setState(() {
+                            _name = value;
+                          });
+                        },
+                        style: const TextStyle(color: Colors.white),
+                        textDirection: TextDirection.rtl,
+                        decoration: InputDecoration(
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              style: BorderStyle.solid,
+                              color: Colors.white,
+                            ),
+                          ),
+                          hintText: "שם מלא",
+                          hintStyle: const TextStyle(color: Colors.white),
+                          border: InputBorder.none,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              style: BorderStyle.solid,
+                              color: Colors.white,
+                            ),
+                          ),
+                          hintTextDirection: TextDirection.rtl,
+                          contentPadding: const EdgeInsets.all(10),
+                        ),
+                        validator: (value) {
+                          if (value?.isEmpty ?? true) {
+                            return 'Please enter your name';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.only(left: 20, right: 20),
                       child: TextFormField(
@@ -165,10 +206,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                           try {
                             await _authService.signUpWithEmailAndPassword(
-                              context,
-                              _email,
-                              _passwordController.text,
-                            );
+                                context,
+                                _email,
+                                _passwordController.text,
+                                _name);
                           } catch (e) {
                             _showAlert(context,
                                 "An error occurred. Please try again.");

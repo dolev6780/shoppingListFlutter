@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shoppinglist/screens/home_screen.dart';
+import 'package:uuid/uuid.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -31,7 +32,8 @@ class AuthService {
           await _auth.signInWithCredential(credential);
 
       // After signing in, create user profile document
-      await _createUserProfileDoc(googleUser.email);
+      await _createUserProfileDoc(
+          googleUser.email, googleUser.displayName.toString());
 
       // Navigate to the HomeScreen
       // ignore: use_build_context_synchronously
@@ -49,17 +51,21 @@ class AuthService {
     }
   }
 
-  Future<void> _createUserProfileDoc(String email) async {
+  Future<void> _createUserProfileDoc(String email, String displayName) async {
     try {
       String? userId = _auth.currentUser?.uid;
       final CollectionReference collectionRef = _firestore.collection("users");
       final DocumentReference newDocRef = collectionRef.doc(userId);
+
+      final String connectId = const Uuid().v4();
+
       final docData = {
         "email": email,
+        "displayName": displayName,
         "connections": [],
-        "sendconnections": [],
-        "connectionrequests": [],
+        "connectId": connectId,
       };
+
       await newDocRef.set(docData);
     } catch (e) {
       print("Error creating user profile: $e");
@@ -110,8 +116,8 @@ class AuthService {
     }
   }
 
-  Future<void> signUpWithEmailAndPassword(
-      BuildContext context, String email, String password) async {
+  Future<void> signUpWithEmailAndPassword(BuildContext context, String email,
+      String password, String displayName) async {
     try {
       final UserCredential userCredential =
           await _auth.createUserWithEmailAndPassword(
@@ -121,7 +127,7 @@ class AuthService {
 
       // Check if the user was successfully created
       if (userCredential.user != null) {
-        await _createUserProfileDoc(email);
+        await _createUserProfileDoc(email, displayName);
 
         // Navigate to the HomeScreen
         // ignore: use_build_context_synchronously

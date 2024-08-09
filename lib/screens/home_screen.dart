@@ -2,11 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:shoppinglist/components/bottom_bar.dart';
 import 'package:shoppinglist/components/bottom_modal_create_list.dart';
 import 'package:shoppinglist/components/list_titles.dart';
 import 'package:shoppinglist/screens/finished_lists_screen.dart';
 import 'package:shoppinglist/screens/my_connections_screen.dart';
+import 'package:shoppinglist/screens/settings_screen.dart';
 import 'package:shoppinglist/screens/signin_screen.dart';
 import '../components/app_bar.dart';
 import '../services/auth_service.dart';
@@ -21,12 +21,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
 
+  // ignore: unused_field
   List<String> _titles = [];
-
+  String _userName = "";
   @override
   void initState() {
     super.initState();
     _refreshLists();
+    _getName();
   }
 
   Future<void> _refreshLists() async {
@@ -54,14 +56,39 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _getName() async {
+    try {
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final User? user = Provider.of<User?>(context, listen: false);
+
+      if (user != null) {
+        final DocumentSnapshot documentSnapshot =
+            await firestore.collection('users').doc(user.uid).get();
+
+        if (documentSnapshot.exists) {
+          setState(() {
+            _userName = documentSnapshot['displayName'];
+          });
+        } else {
+          // Handle the case when the document does not exist
+        }
+      }
+    } catch (e) {
+      // Handle error (e.g., show an error message)
+    }
+  }
+
   Future<void> _signOut() async {
     await _authService.signOut();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) => const SignInScreen(),
-      ),
-    );
+
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const SignInScreen(),
+        ),
+      );
+    }
   }
 
   @override
@@ -71,8 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (user == null) {
       return const SignInScreen();
     }
-
-    String name = user.displayName ?? "";
+    String name = _userName;
     if (name.isNotEmpty) {
       name = name[0].toUpperCase() + name.substring(1);
     }
@@ -115,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Text(
                               name.isNotEmpty
                                   ? name[0].toUpperCase()
-                                  : user.email![0].toUpperCase(),
+                                  : user.email.toString()[0].toUpperCase(),
                               style: const TextStyle(
                                 fontSize: 24,
                                 color: Colors.white,
@@ -124,9 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(
-                          height: 20,
-                        ),
+                        const SizedBox(height: 10),
                         Text(
                           name.isNotEmpty
                               ? name
@@ -197,12 +221,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              // Navigator.push(
-                              //     context,
-                              //     MaterialPageRoute<void>(
-                              //       builder: (BuildContext context) =>
-                              //           const SettingScreen(),
-                              //     ));
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute<void>(
+                                    builder: (BuildContext context) =>
+                                        const SettingsScreen(),
+                                  ));
                             },
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
