@@ -6,9 +6,9 @@ class PopupConnections {
   final ConnectionService connectionService = ConnectionService();
 
   void showAlertDialog(BuildContext context, List<String> selectedUIDs) async {
-    List<String> connections = await connectionService.fetchConnections();
+    List<Map<String, dynamic>> connections =
+        await connectionService.fetchConnections();
     List<String> toShareSelectedUIDs = List.from(selectedUIDs);
-
     showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -61,8 +61,10 @@ class PopupConnections {
                             itemCount: connections.length,
                             itemBuilder: (context, index) {
                               var connection = connections[index];
-                              String connectionId = connection
-                                  .toString(); // Ensure it's treated as String
+                              String connectionId = connection['id']
+                                  .toString(); //get connection id
+                              String connectionName = connection['name']
+                                  .toString(); // get connection name
                               bool isSelected =
                                   toShareSelectedUIDs.contains(connectionId);
                               return Directionality(
@@ -74,7 +76,7 @@ class PopupConnections {
                                       backgroundColor: const Color.fromARGB(
                                           255, 20, 67, 117),
                                       child: Text(
-                                        connection['displayName'][0]
+                                        connectionName[0]
                                             .toString()
                                             .toUpperCase(),
                                         style: const TextStyle(
@@ -82,7 +84,7 @@ class PopupConnections {
                                       ),
                                     ),
                                     title: Text(
-                                      connection['displayName'],
+                                      connectionName,
                                       style: const TextStyle(
                                           fontWeight: FontWeight.bold),
                                     ),

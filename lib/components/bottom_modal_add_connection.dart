@@ -13,22 +13,40 @@ class BottomModalAddConnection extends StatefulWidget {
 class _BottomModalState extends State<BottomModalAddConnection> {
   final Color _currentColor = const Color.fromARGB(255, 20, 67, 117);
   final TextEditingController connectionIdController = TextEditingController();
-  Map<String, dynamic>? foundUser; // Store user data including doc ID
-  String? foundUserId; // Store the document ID
+  Map<String, dynamic>? foundUser;
+  String? foundUserId;
+  Map<String, dynamic>? currentUser;
 
   Future<void> searchUserByConnectionId(String connectionId) async {
     try {
       final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      final User? user = Provider.of<User?>(context, listen: false);
+      /////found user query
       final QuerySnapshot querySnapshot = await firestore
           .collection('users')
           .where('connectId', isEqualTo: connectionId)
           .get();
-
+      //get found user
       if (querySnapshot.docs.isNotEmpty) {
-        final DocumentSnapshot userDoc = querySnapshot.docs.first;
+        final DocumentSnapshot foundUserDoc = querySnapshot.docs.first;
         setState(() {
-          foundUser = userDoc.data() as Map<String, dynamic>?;
-          foundUserId = userDoc.id;
+          foundUser = foundUserDoc.data() as Map<String, dynamic>?;
+          foundUserId = foundUserDoc.id;
+        });
+      } else {
+        setState(() {
+          foundUser = null;
+          foundUserId = null;
+        });
+        print('No user found with connectionId $connectionId');
+      }
+      /////current user query
+      DocumentSnapshot currUserDoc =
+          await firestore.collection('users').doc(user!.uid).get();
+      //get current user
+      if (currUserDoc.exists) {
+        setState(() {
+          currentUser = currUserDoc.data() as Map<String, dynamic>?;
         });
       } else {
         setState(() {
@@ -46,7 +64,8 @@ class _BottomModalState extends State<BottomModalAddConnection> {
     }
   }
 
-  Future<void> addConnection(String foundUserId, String currentUserId) async {
+  Future<void> addConnection(String foundUserId, String currentUserId,
+      String foundUserName, String currentUserName) async {
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     final currentUserRef = firestore.collection('users').doc(currentUserId);
     final foundUserRef = firestore.collection('users').doc(foundUserId);
@@ -62,15 +81,28 @@ class _BottomModalState extends State<BottomModalAddConnection> {
           List<dynamic> foundUserConnections =
               foundUserSnapshot.data()?['connections'] ?? [];
 
-          // Add the found user to current user's connections if not already present
-          if (!currentUserConnections.contains(foundUserId)) {
-            currentUserConnections.add(foundUserId);
+          // Create a map with user ID and display name for each connection
+          Map<String, dynamic> foundUserConnection = {
+            'id': foundUserId,
+            'name': foundUserName,
+          };
+          Map<String, dynamic> currentUserConnection = {
+            'id': currentUserId,
+            'name': currentUserName,
+          };
+
+          // Add the found user to the current user's connections if not already present
+          if (!currentUserConnections
+              .any((connection) => connection['id'] == foundUserId)) {
+            currentUserConnections.add(foundUserConnection);
           }
 
-          // Add the current user to found user's connections if not already present
-          if (!foundUserConnections.contains(currentUserId)) {
-            foundUserConnections.add(currentUserId);
+          // Add the current user to the found user's connections if not already present
+          if (!foundUserConnections
+              .any((connection) => connection['id'] == currentUserId)) {
+            foundUserConnections.add(currentUserConnection);
           }
+
           // Update both documents
           transaction
               .update(currentUserRef, {'connections': currentUserConnections});
@@ -79,17 +111,18 @@ class _BottomModalState extends State<BottomModalAddConnection> {
         }
       });
 
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Connection added successfully!'),
+        const SnackBar(
+          content: Text('Connection added successfully!'),
           backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
       print('Error adding connection: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to add connection.'),
+        const SnackBar(
+          content: Text('Failed to add connection.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -203,8 +236,12 @@ class _BottomModalState extends State<BottomModalAddConnection> {
                           ),
                           trailing: IconButton(
                             onPressed: () {
-                              if (user != null) {
-                                addConnection(foundUserId!, user.uid);
+                              if (user.email!.isNotEmpty) {
+                                addConnection(
+                                    foundUserId!,
+                                    user.uid,
+                                    foundUser!['displayName'],
+                                    currentUser!['displayName']);
                               }
                             },
                             icon: Icon(

@@ -42,7 +42,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
     final User? user = Provider.of<User?>(context, listen: false);
     final String email = user?.email ?? "";
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
+    selectedUIDs.add(user!.uid);
     // Prepare the list data
     var day = DateTime.now().day < 10
         ? "0${DateTime.now().day}"
@@ -67,27 +67,13 @@ class _BottomModalState extends State<BottomModalCreateList> {
     // Ensure the list has a title and email is available
     if (email.isNotEmpty && listTitle.text.isNotEmpty) {
       try {
-        // Create the list for the current user
-        final DocumentReference userDocRef = firestore
-            .collection("users")
-            .doc(user?.uid)
-            .collection("lists")
-            .doc();
-
-        await userDocRef.set(docData);
-
         // Create the list for each selected user
         for (var uid in selectedUIDs) {
-          print(uid.substring(1, uid.length - 1));
-          // final DocumentReference otherUserDocRef = firestore
-          //     .collection("users")
-          //     .doc(uid.substring(1, uid.length - 1))
-          //     .collection("lists")
-          //     .doc();
+          final DocumentReference otherUserDocRef =
+              firestore.collection("users").doc(uid).collection("lists").doc();
 
-          // await otherUserDocRef.set(docData);
+          await otherUserDocRef.set(docData);
         }
-
         Navigator.pop(context);
         widget.onListCreated();
         listTitle.clear();
