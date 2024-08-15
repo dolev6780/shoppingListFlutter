@@ -13,17 +13,20 @@ class TheListScreen extends StatefulWidget {
   final String uid;
   final Color color;
   final Color textColor;
-
-  const TheListScreen({
-    Key? key,
-    required this.creator,
-    required this.title,
-    required this.list,
-    required this.docId,
-    required this.uid,
-    required this.color,
-    required this.textColor,
-  }) : super(key: key);
+  final String listId;
+  final List sharedWith;
+  const TheListScreen(
+      {Key? key,
+      required this.creator,
+      required this.title,
+      required this.list,
+      required this.docId,
+      required this.uid,
+      required this.color,
+      required this.textColor,
+      required this.listId,
+      required this.sharedWith})
+      : super(key: key);
 
   @override
   State<TheListScreen> createState() => _TheListScreenState();
@@ -42,10 +45,37 @@ class _TheListScreenState extends State<TheListScreen> {
 
   Future<void> updateSubcollectionField() async {
     try {
-      var docRef =
-          FirebaseFirestore.instance.collection('users').doc(widget.uid);
-      var subcollectionRef = docRef.collection('lists');
-      await subcollectionRef.doc(widget.docId).update({'list': listItems});
+      var docRef = FirebaseFirestore.instance.collection('users');
+      List<String> sharedWithUsers = List<String>.from(widget.sharedWith);
+      for (String sharedUserId in sharedWithUsers) {
+        // Query and update documents in 'lists' collection
+        final QuerySnapshot listsSnapshot = await docRef
+            .doc(sharedUserId)
+            .collection("lists")
+            .where("listId", isEqualTo: widget.listId)
+            .get();
+
+        for (var doc in listsSnapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>?;
+          if (data != null) {
+            await doc.reference.update({'list': listItems});
+          }
+        }
+
+        // Query and update documents in 'pendingLists' collection
+        final QuerySnapshot pendingListsSnapshot = await docRef
+            .doc(sharedUserId)
+            .collection("pendingLists")
+            .where("listId", isEqualTo: widget.listId)
+            .get();
+
+        for (var doc in pendingListsSnapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>?;
+          if (data != null) {
+            await doc.reference.update({'list': listItems});
+          }
+        }
+      }
       print("Updated Firestore with list items");
     } catch (e) {
       print('Error updating subcollection field: $e');
@@ -88,158 +118,164 @@ class _TheListScreenState extends State<TheListScreen> {
           color: widget.color,
         ),
       ),
-      body: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 20),
-            child: ListView.builder(
-              itemCount: listItems.length,
-              itemBuilder: (context, index) {
-                var item = listItems[index];
-                Duration animationDelay = Duration(milliseconds: 100 * index);
-                return Animate(
-                  effects: const [FadeEffect()],
-                  delay: animationDelay,
-                  child: Directionality(
-                    textDirection: TextDirection.rtl,
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(10),
-                                boxShadow: const [
-                                  BoxShadow(
-                                      blurRadius: 4,
-                                      color: Color.fromARGB(255, 151, 151, 151),
-                                      offset: Offset(0, 2))
-                                ],
-                                color: Colors.white),
-                            child: ListTile(
-                              leading: Checkbox(
-                                value: listItems[index]['checked'],
-                                onChanged: (bool? value) {
-                                  _onCheckboxChanged(value, index);
-                                },
-                                shape: const CircleBorder(),
-                                activeColor: widget.color,
-                                checkColor: widget.color,
-                              ),
-                              title: GestureDetector(
-                                onTap: () {
-                                  bool? currentValue =
-                                      listItems[index]['checked'];
-                                  _onCheckboxChanged(!currentValue!, index);
-                                },
-                                child: Container(
-                                  alignment: Alignment.centerRight,
-                                  decoration: const BoxDecoration(),
-                                  child: Text(
-                                    item['item'],
-                                    style: TextStyle(
-                                        color: listItems[index]['checked']
-                                            ? widget.color
-                                            : Colors.black,
-                                        fontWeight: listItems[index]['checked']
-                                            ? FontWeight.bold
-                                            : FontWeight.normal),
-                                  ),
+      body: RefreshIndicator(
+        onRefresh: refreshList,
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: ListView.builder(
+                itemCount: listItems.length,
+                itemBuilder: (context, index) {
+                  var item = listItems[index];
+                  Duration animationDelay = Duration(milliseconds: 100 * index);
+                  return Animate(
+                    effects: const [FadeEffect()],
+                    delay: animationDelay,
+                    child: Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                        blurRadius: 4,
+                                        color:
+                                            Color.fromARGB(255, 151, 151, 151),
+                                        offset: Offset(0, 2))
+                                  ],
+                                  color: Colors.white),
+                              child: ListTile(
+                                leading: Checkbox(
+                                  value: listItems[index]['checked'],
+                                  onChanged: (bool? value) {
+                                    _onCheckboxChanged(value, index);
+                                  },
+                                  shape: const CircleBorder(),
+                                  activeColor: widget.color,
+                                  checkColor: widget.color,
                                 ),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.black),
-                                    onPressed: () => _editItem.showAlertDialog(
-                                      context,
-                                      widget.color,
-                                      widget.docId,
-                                      refreshList,
-                                      listItems[index]['item'],
-                                      index,
+                                title: GestureDetector(
+                                  onTap: () {
+                                    bool? currentValue =
+                                        listItems[index]['checked'];
+                                    _onCheckboxChanged(!currentValue!, index);
+                                  },
+                                  child: Container(
+                                    alignment: Alignment.centerRight,
+                                    decoration: const BoxDecoration(),
+                                    child: Text(
+                                      item['item'],
+                                      style: TextStyle(
+                                          color: listItems[index]['checked']
+                                              ? widget.color
+                                              : Colors.black,
+                                          fontWeight: listItems[index]
+                                                  ['checked']
+                                              ? FontWeight.bold
+                                              : FontWeight.normal),
                                     ),
                                   ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.black),
-                                    onPressed: () async {
-                                      setState(() {
-                                        listItems.removeAt(index);
-                                        checkedCount = listItems
-                                            .where((item) =>
-                                                item['checked'] == true)
-                                            .length;
-                                      });
-                                      await updateSubcollectionField();
-                                    },
-                                  ),
-                                ],
+                                ),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.black),
+                                      onPressed: () =>
+                                          _editItem.showAlertDialog(
+                                        context,
+                                        widget.color,
+                                        widget.docId,
+                                        refreshList,
+                                        listItems[index]['item'],
+                                        index,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.black),
+                                      onPressed: () async {
+                                        setState(() {
+                                          listItems.removeAt(index);
+                                          checkedCount = listItems
+                                              .where((item) =>
+                                                  item['checked'] == true)
+                                              .length;
+                                        });
+                                        await updateSubcollectionField();
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (listItems.length == checkedCount)
+              Animate(
+                effects: const [
+                  SlideEffect(
+                    begin: Offset(0, 1),
+                    end: Offset(0, 0),
+                    duration: Duration(milliseconds: 300),
+                  ),
+                ],
+                child: Positioned(
+                  bottom: 20,
+                  left: 10,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: widget.color,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: const [
+                        BoxShadow(
+                          blurRadius: 4,
+                          color: Color.fromARGB(255, 202, 202, 202),
                         ),
                       ],
                     ),
+                    child: TextButton(
+                      onPressed: () => {},
+                      child: const Text(
+                        "סיים רשימה",
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-          if (listItems.length == checkedCount)
-            Animate(
-              effects: const [
-                SlideEffect(
-                  begin: Offset(0, 1),
-                  end: Offset(0, 0),
-                  duration: Duration(milliseconds: 300),
                 ),
-              ],
-              child: Positioned(
+              )
+            else
+              Positioned(
                 bottom: 20,
                 left: 10,
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: widget.color,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: const [
-                      BoxShadow(
-                        blurRadius: 4,
-                        color: Color.fromARGB(255, 202, 202, 202),
-                      ),
-                    ],
-                  ),
-                  child: TextButton(
-                    onPressed: () => {},
-                    child: const Text(
-                      "סיים רשימה",
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      "$checkedCount :משימות שבוצעו",
                       style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
+                        color: widget.color,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
               ),
-            )
-          else
-            Positioned(
-              bottom: 20,
-              left: 10,
-              child: Container(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    "$checkedCount :משימות שבוצעו",
-                    style: TextStyle(
-                      color: widget.color,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
@@ -252,6 +288,8 @@ class _TheListScreenState extends State<TheListScreen> {
             builder: (context) => BottomModalCreateItem(
               color: widget.color,
               docId: widget.docId,
+              listId: widget.listId,
+              sharedWith: widget.sharedWith,
               onItemCreated: refreshList,
             ),
           );

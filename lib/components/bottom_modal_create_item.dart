@@ -8,13 +8,17 @@ import 'package:provider/provider.dart';
 class BottomModalCreateItem extends StatefulWidget {
   final Color color;
   final String docId;
+  final String listId;
+  final List sharedWith;
   final VoidCallback onItemCreated;
 
   const BottomModalCreateItem(
       {super.key,
       required this.onItemCreated,
       required this.color,
-      required this.docId});
+      required this.docId,
+      required this.listId,
+      required this.sharedWith});
 
   @override
   State<BottomModalCreateItem> createState() => _BottomModalState();
@@ -24,8 +28,9 @@ class _BottomModalState extends State<BottomModalCreateItem> {
   final TextEditingController listItem = TextEditingController();
   bool warning = false;
   Timer? _warningTimer;
+
   void updateItemsInList() async {
-    final User? user = Provider.of<User?>(context, listen: false);
+    Provider.of<User?>(context, listen: false);
     var time = "${DateTime.now().hour + 3}:${DateTime.now().minute}";
     try {
       if (listItem.text.isEmpty) {
@@ -40,13 +45,41 @@ class _BottomModalState extends State<BottomModalCreateItem> {
         });
         return;
       }
-      var docRef =
-          FirebaseFirestore.instance.collection('users').doc("${user?.uid}");
-      var subcollectionRef = docRef.collection('lists');
-      var documentSnapshot = await subcollectionRef.doc(widget.docId).get();
-      List<dynamic> list = documentSnapshot.data()?['list'] ?? [];
-      list.add({'item': listItem.text, 'time': time, 'checked': false});
-      await subcollectionRef.doc(widget.docId).update({'list': list});
+      var docRef = FirebaseFirestore.instance.collection('users');
+      List<String> sharedWithUsers = List<String>.from(widget.sharedWith);
+      for (String sharedUserId in sharedWithUsers) {
+        // Query and update documents in 'lists' collection
+        final QuerySnapshot listsSnapshot = await docRef
+            .doc(sharedUserId)
+            .collection("lists")
+            .where("listId", isEqualTo: widget.listId)
+            .get();
+
+        for (var doc in listsSnapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>?;
+          if (data != null) {
+            List<dynamic> list = data['list'] ?? [];
+            list.add({'item': listItem.text, 'time': time, 'checked': false});
+            await doc.reference.update({'list': list});
+          }
+        }
+
+        // Query and update documents in 'pendingLists' collection
+        final QuerySnapshot pendingListsSnapshot = await docRef
+            .doc(sharedUserId)
+            .collection("pendingLists")
+            .where("listId", isEqualTo: widget.listId)
+            .get();
+
+        for (var doc in pendingListsSnapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>?;
+          if (data != null) {
+            List<dynamic> list = data['list'] ?? [];
+            list.add({'item': listItem.text, 'time': time, 'checked': false});
+            await doc.reference.update({'list': list});
+          }
+        }
+      }
       widget.onItemCreated();
       listItem.text = "";
       Navigator.pop(context, 'OK');

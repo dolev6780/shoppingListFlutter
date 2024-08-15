@@ -26,23 +26,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return RegExp(r'^[\w-\.]+@[a-zA-Z\d\.-]+\.[a-zA-Z]{2,}$').hasMatch(email);
   }
 
-  void _showAlert(BuildContext context, String alert) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          content: Text(alert),
-          actions: [
-            TextButton(
-              child: const Text("OK"),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
+  void _showAlert(String alert) {
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            content: Text(alert),
+            actions: [
+              TextButton(
+                child: const Text("OK"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   @override
@@ -211,12 +213,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 _passwordController.text,
                                 _name);
                           } catch (e) {
-                            _showAlert(context,
-                                "An error occurred. Please try again.");
+                            _showAlert("An error occurred. Please try again.");
                           } finally {
-                            setState(() {
-                              _isSigningUp = false;
-                            });
+                            if (mounted) {
+                              setState(() {
+                                _isSigningUp = false;
+                              });
+                            }
                           }
                         }
                       },

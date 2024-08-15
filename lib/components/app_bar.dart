@@ -14,6 +14,7 @@ class Appbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Color textColor = Colors.white;
     return AppBar(
       flexibleSpace: Container(
         decoration: const BoxDecoration(),
@@ -22,10 +23,10 @@ class Appbar extends StatelessWidget {
       automaticallyImplyLeading: backBtn,
       title: Text(
         title,
-        style: const TextStyle(color: Colors.white),
+        style: TextStyle(color: textColor),
       ),
       backgroundColor: color,
-      iconTheme: const IconThemeData(color: Colors.white),
+      iconTheme: IconThemeData(color: textColor),
     );
   }
 }

@@ -51,6 +51,8 @@ dependencies:
   convex_bottom_bar: ^3.2.0
   uuid: ^4.4.2
   share_plus: ^8.0.0
+  awesome_notifications: 0.9.3+1
+
  
 dev_dependencies:
   flutter_test:

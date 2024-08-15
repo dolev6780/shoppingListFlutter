@@ -23,7 +23,7 @@ class _SignInScreenState extends State<SignInScreen> {
     return RegExp(r'^[\w-\.]+@[a-zA-Z\d\.-]+\.[a-zA-Z]{2,}$').hasMatch(email);
   }
 
-  void _showAlert(BuildContext context, String alert) {
+  void _showAlert(String alert) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -167,8 +167,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               _passwordController.text,
                             );
                           } catch (e) {
-                            _showAlert(context,
-                                "An error occurred. Please try again.");
+                            _showAlert("An error occurred. Please try again.");
                           } finally {
                             setState(() {
                               _isSigningIn = false;

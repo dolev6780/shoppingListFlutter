@@ -7,7 +7,6 @@ import 'package:shoppinglist/screens/home_screen.dart';
 
 class EditList {
   Color _currentColor;
-  Color _currentTextColor;
   bool _expanded = false;
   final TextEditingController listTitle;
   bool _listTitleWarning = false;
@@ -23,19 +22,16 @@ class EditList {
   ];
 
   final String listId;
-
+  final List sharedWith;
   EditList({
     required this.listId,
     required String initialTitle,
     required Color initialColor,
-    required Color initialTextColor,
+    required this.sharedWith,
   })  : _currentColor = initialColor,
-        _currentTextColor = initialTextColor,
         listTitle = TextEditingController(text: initialTitle);
-
   void showAlertDialog(BuildContext context) {
     Color selectedColor = _currentColor;
-
     showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -245,8 +241,6 @@ class EditList {
 
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     final CollectionReference collectionRef = firestore.collection("users");
-    final DocumentReference userDocRef =
-        collectionRef.doc("${user?.uid}").collection("lists").doc(listId);
 
     var day = DateTime.now().day < 10
         ? "0${DateTime.now().day}"
@@ -257,20 +251,43 @@ class EditList {
     var date = "$day/$month/${DateTime.now().year}";
     String currentColorHex =
         '#${_currentColor.value.toRadixString(16).substring(2)}';
-    String currentTextColorHex =
-        '#${_currentTextColor.value.toRadixString(16).substring(2)}';
     final docData = {
       "creator": email,
       "title": listTitle.text,
       "date": date,
       "color": currentColorHex,
-      "textColor": currentTextColorHex
     };
 
     if (email.isNotEmpty && listTitle.text.isNotEmpty) {
       try {
-        await userDocRef.update(docData);
+        // Retrieve the list of users who have access to this list
+        List<String> sharedWithUsers = List<String>.from(sharedWith);
 
+        for (String sharedUserId in sharedWithUsers) {
+          // Query and update documents in 'lists' collection
+          final QuerySnapshot listsSnapshot = await collectionRef
+              .doc(sharedUserId)
+              .collection("lists")
+              .where("listId", isEqualTo: listId)
+              .get();
+
+          for (var doc in listsSnapshot.docs) {
+            await doc.reference.update(docData);
+          }
+
+          // Query and update documents in 'pendingLists' collection
+          final QuerySnapshot pendingListsSnapshot = await collectionRef
+              .doc(sharedUserId)
+              .collection("pendingLists")
+              .where("listId", isEqualTo: listId)
+              .get();
+
+          for (var doc in pendingListsSnapshot.docs) {
+            await doc.reference.update(docData);
+          }
+        }
+
+        // Navigate back to the HomeScreen
         Navigator.push(
           context,
           MaterialPageRoute<void>(

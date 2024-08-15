@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shoppinglist/components/app_bar.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shoppinglist/screens/privacy.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,7 +16,18 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String _userName = "";
   String _connectId = "";
-
+  final List<Color> _colors = [
+    const Color.fromARGB(255, 20, 67, 117),
+    Colors.red,
+    Colors.green,
+    Colors.yellow,
+    Colors.orange,
+    Colors.purple,
+    Colors.tealAccent,
+  ];
+  Color _currentColor = const Color.fromARGB(255, 20, 67, 117);
+  bool _expanded = false;
+  bool _nightMode = false;
   @override
   void initState() {
     super.initState();
@@ -50,22 +61,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final User? user = Provider.of<User?>(context);
     String name = _userName;
-
+    Color color = _currentColor;
     if (name.isNotEmpty) {
       name = name[0].toUpperCase() + name.substring(1);
     }
 
     return Scaffold(
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Appbar(
           title: "הגדרות",
           backBtn: true,
-          color: Color.fromARGB(255, 20, 67, 117),
+          color: color,
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.only(right: 20),
+        padding: const EdgeInsets.only(right: 20, left: 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
@@ -79,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     borderRadius: BorderRadius.circular(50),
                     child: CircleAvatar(
                       maxRadius: 40,
-                      backgroundColor: const Color.fromARGB(255, 20, 67, 117),
+                      backgroundColor: color,
                       child: Text(
                         name.isNotEmpty
                             ? name[0].toUpperCase()
@@ -117,30 +128,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            const Divider(
-                height: 1,
-                indent: 50,
-                endIndent: 50,
-                color: Color.fromARGB(255, 20, 67, 117)),
+            Divider(height: 1, indent: 50, endIndent: 50, color: color),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // IconButton(
-                //   icon: const Icon(Icons.copy,
-                //       size: 20, color: Color.fromARGB(255, 20, 67, 117)),
-                //   onPressed: () {
-                //     Clipboard.setData(ClipboardData(text: _connectId));
-                //     ScaffoldMessenger.of(context).showSnackBar(
-                //       const SnackBar(
-                //           content: Text(
-                //             'הועתק ללוח',
-                //             textAlign: TextAlign.right,
-                //           ),
-                //           backgroundColor: Color.fromARGB(255, 20, 67, 117)),
-                //     );
-                //   },
-                // ),
                 Row(
                   children: [
                     IconButton(
@@ -157,12 +149,156 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            const Divider(
-                height: 1,
-                indent: 50,
-                endIndent: 50,
-                color: Color.fromARGB(255, 20, 67, 117)),
+            Divider(height: 1, color: color),
             const SizedBox(height: 10),
+            const Text("תצוגה",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _expanded = !_expanded;
+                      });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      width: _expanded ? 220.0 : 24.0,
+                      height: 50,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Expanded(
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: List.generate(_colors.length, (index) {
+                                return GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _currentColor = _colors[index];
+                                    });
+                                  },
+                                  child: Container(
+                                    width: 20,
+                                    height: 20,
+                                    margin: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: _colors[index],
+                                      shape: BoxShape.circle,
+                                      border: _currentColor == _colors[index]
+                                          ? Border.all(
+                                              color: Colors.black, width: 2.0)
+                                          : null,
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _expanded = !_expanded;
+                              });
+                            },
+                            child: !_expanded
+                                ? Container(
+                                    width: 20,
+                                    height: 20,
+                                    decoration: BoxDecoration(
+                                      color: color,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.close,
+                                    color: _currentColor,
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    const Text(
+                      "בחר צבע ערכת נושא",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Icon(
+                      Icons.sunny,
+                      color: color,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Switch(
+                  value: _nightMode,
+                  onChanged: (value) => {
+                    setState(() {
+                      _nightMode = !_nightMode;
+                    })
+                  },
+                  activeTrackColor: color,
+                ),
+                Row(
+                  children: [
+                    const Text(
+                      "מצב לילה",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    Icon(
+                      Icons.nightlight,
+                      color: color,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Divider(height: 1, color: color),
+            const SizedBox(height: 10),
+            const Text("אודות",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            Directionality(
+              textDirection: TextDirection.rtl,
+              child: ListTile(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (BuildContext context) => const Privacy(),
+                    ),
+                  );
+                },
+                title: const Text("פרטיות"),
+              ),
+            ),
+            const Directionality(
+              textDirection: TextDirection.rtl,
+              child: ListTile(
+                title: Text("גירסה"),
+                subtitle: Text("1.0"),
+              ),
+            )
           ],
         ),
       ),

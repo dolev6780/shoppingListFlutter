@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shoppinglist/components/popup_connections.dart';
+import 'package:uuid/uuid.dart';
 
 class BottomModalCreateList extends StatefulWidget {
   final VoidCallback onListCreated;
@@ -62,6 +63,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
       "finished": false,
       "color": currentColorHex,
       "sharedWith": selectedUIDs, // Ensure this is a list of strings
+      "listId": const Uuid().v4()
     };
 
     // Ensure the list has a title and email is available
@@ -69,10 +71,21 @@ class _BottomModalState extends State<BottomModalCreateList> {
       try {
         // Create the list for each selected user
         for (var uid in selectedUIDs) {
-          final DocumentReference otherUserDocRef =
-              firestore.collection("users").doc(uid).collection("lists").doc();
-
-          await otherUserDocRef.set(docData);
+          if (uid != user.uid) {
+            final DocumentReference otherUserDocRef = firestore
+                .collection("users")
+                .doc(uid)
+                .collection("pendingLists")
+                .doc();
+            await otherUserDocRef.set(docData);
+          } else {
+            final DocumentReference otherUserDocRef = firestore
+                .collection("users")
+                .doc(uid)
+                .collection("lists")
+                .doc();
+            await otherUserDocRef.set(docData);
+          }
         }
         Navigator.pop(context);
         widget.onListCreated();

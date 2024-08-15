@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shoppinglist/components/bottom_modal_add_connection.dart';
 import 'package:shoppinglist/services/connection_service.dart';
@@ -65,23 +63,22 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen> {
                       trailing: IconButton(
                         icon: Icon(Icons.delete, color: color),
                         onPressed: () async {
-                          // Show a confirmation dialog before deleting
                           bool? confirmDelete = await showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text('Delete Connection'),
+                              title: const Text('מחיקת איש קשר'),
                               content: const Text(
-                                  'Are you sure you want to delete this connection?'),
+                                  'האם אתה בטוח שתרצה למחוק את האיש קשר?'),
                               actions: [
                                 TextButton(
                                   onPressed: () =>
                                       Navigator.of(context).pop(false),
-                                  child: const Text('Cancel'),
+                                  child: const Text('בטל'),
                                 ),
                                 TextButton(
                                   onPressed: () =>
                                       Navigator.of(context).pop(true),
-                                  child: const Text('Delete'),
+                                  child: const Text('אשר'),
                                 ),
                               ],
                             ),
@@ -90,7 +87,7 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen> {
                           if (confirmDelete == true) {
                             await connectionService
                                 .deleteConnection(connection['id']);
-                            setState(() {}); // Refresh the list after deletion
+                            setState(() {});
                           }
                         },
                       ),
@@ -111,7 +108,11 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen> {
             builder: (context) => const BottomModalAddConnection(),
           );
         },
-        label: const Text("הוסף איש קשר"),
+        label: Text(
+          "הוסף איש קשר",
+          style: TextStyle(color: textColor),
+        ),
+        backgroundColor: color,
       ),
     );
   }
