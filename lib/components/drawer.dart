@@ -6,6 +6,7 @@ import 'package:shoppinglist/screens/finished_lists_screen.dart';
 import 'package:shoppinglist/screens/my_connections_screen.dart';
 import 'package:shoppinglist/screens/settings_screen.dart';
 import 'package:shoppinglist/screens/signin_screen.dart';
+import 'package:shoppinglist/services/theme_provider.dart';
 import '../services/auth_service.dart';
 
 class CustomDrawer extends StatelessWidget {
@@ -29,13 +30,17 @@ class CustomDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final Color themeColor = themeProvider.themeColor;
+    final bool isDarkMode = themeProvider.themeMode == ThemeMode.dark;
+    final Color btnColor = isDarkMode ? Colors.white : Colors.black;
     String name = userName;
+
     if (name.isNotEmpty) {
       name = name[0].toUpperCase() + name.substring(1);
     }
 
     return Drawer(
-      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(10.0),
@@ -57,7 +62,7 @@ class CustomDrawer extends StatelessWidget {
                       borderRadius: BorderRadius.circular(50),
                       child: CircleAvatar(
                         maxRadius: 30,
-                        backgroundColor: const Color.fromARGB(255, 20, 67, 117),
+                        backgroundColor: themeColor,
                         child: Text(
                           name.isNotEmpty
                               ? name[0].toUpperCase()
@@ -77,7 +82,8 @@ class CustomDrawer extends StatelessWidget {
                           : user!.email.toString()[0].toUpperCase() +
                               user.email.toString().substring(1),
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.black),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -97,17 +103,14 @@ class CustomDrawer extends StatelessWidget {
                             ),
                           );
                         },
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.history,
-                                color: Color.fromARGB(255, 20, 67, 117)),
+                            Icon(Icons.history, color: themeColor),
                             Text(
                               "הסטוריית רשימות",
                               style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                              ),
+                                  fontWeight: FontWeight.w700, color: btnColor),
                             ),
                           ],
                         ),
@@ -122,17 +125,14 @@ class CustomDrawer extends StatelessWidget {
                             ),
                           );
                         },
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.people,
-                                color: Color.fromARGB(255, 20, 67, 117)),
+                            Icon(Icons.people, color: themeColor),
                             Text(
                               "אנשי הקשר שלי",
                               style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                              ),
+                                  fontWeight: FontWeight.w700, color: btnColor),
                             ),
                           ],
                         ),
@@ -146,17 +146,14 @@ class CustomDrawer extends StatelessWidget {
                                     const SettingsScreen(),
                               ));
                         },
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.settings,
-                                color: Color.fromARGB(255, 20, 67, 117)),
+                            Icon(Icons.settings, color: themeColor),
                             Text(
                               "הגדרות",
                               style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                              ),
+                                  fontWeight: FontWeight.w700, color: btnColor),
                             ),
                           ],
                         ),
@@ -170,17 +167,14 @@ class CustomDrawer extends StatelessWidget {
                                     const ContactUs(),
                               ));
                         },
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.email_outlined,
-                                color: Color.fromARGB(255, 20, 67, 117)),
+                            Icon(Icons.email_outlined, color: themeColor),
                             Text(
                               "יצירת קשר",
                               style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                              ),
+                                  fontWeight: FontWeight.w700, color: btnColor),
                             ),
                           ],
                         ),
@@ -194,17 +188,14 @@ class CustomDrawer extends StatelessWidget {
                                     const SettingsScreen(),
                               ));
                         },
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.star,
-                                color: Color.fromARGB(255, 20, 67, 117)),
+                            Icon(Icons.star, color: themeColor),
                             Text(
                               "דרג.י אותנו",
                               style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                              ),
+                                  fontWeight: FontWeight.w700, color: btnColor),
                             ),
                           ],
                         ),
@@ -218,17 +209,14 @@ class CustomDrawer extends StatelessWidget {
                                     const SettingsScreen(),
                               ));
                         },
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(Icons.share,
-                                color: Color.fromARGB(255, 20, 67, 117)),
+                            Icon(Icons.share, color: themeColor),
                             Text(
                               "שיתוף",
                               style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.w700,
-                              ),
+                                  fontWeight: FontWeight.w700, color: btnColor),
                             ),
                           ],
                         ),
@@ -242,17 +230,15 @@ class CustomDrawer extends StatelessWidget {
                         margin: const EdgeInsets.all(10),
                         child: TextButton(
                           onPressed: () => _signOut(context),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Icon(Icons.logout,
-                                  color: Color.fromARGB(255, 20, 67, 117)),
+                              Icon(Icons.logout, color: themeColor),
                               Text(
                                 "התנתקות",
                                 style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                    fontWeight: FontWeight.w700,
+                                    color: btnColor),
                               ),
                             ],
                           ),
@@ -265,7 +251,6 @@ class CustomDrawer extends StatelessWidget {
               padding: EdgeInsets.all(8.0),
               child: Text(
                 "copyright 2023",
-                style: TextStyle(color: Colors.black),
               ),
             ),
           ],

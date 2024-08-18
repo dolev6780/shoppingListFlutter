@@ -3,24 +3,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shoppinglist/components/popup_connections.dart';
 import 'package:shoppinglist/screens/home_screen.dart';
 
 class EditList {
-  Color _currentColor;
-  bool _expanded = false;
+  final Color _currentColor;
   final TextEditingController listTitle;
   bool _listTitleWarning = false;
   Timer? _warningTimer;
-  final List<Color> _colors = [
-    const Color.fromARGB(255, 20, 67, 117),
-    Colors.red,
-    Colors.green,
-    Colors.yellow,
-    Colors.orange,
-    Colors.purple,
-    Colors.tealAccent,
-  ];
-
   final String listId;
   final List sharedWith;
   EditList({
@@ -32,6 +22,7 @@ class EditList {
         listTitle = TextEditingController(text: initialTitle);
   void showAlertDialog(BuildContext context) {
     Color selectedColor = _currentColor;
+
     showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -39,30 +30,14 @@ class EditList {
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
               elevation: 8,
-              backgroundColor: Colors.white,
               actionsAlignment: MainAxisAlignment.center,
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
                     onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Blank Popup'),
-                            content: const Text('This is a blank popup.'),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('Close'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                      // PopupConnections().showAlertDialog(
+                      //       context, selectedUIDs, selectedColor);
                     },
                     icon: Icon(
                       Icons.group_add,
@@ -136,76 +111,6 @@ class EditList {
                           ),
                         )
                       : const SizedBox(height: 0),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _expanded = !_expanded;
-                        });
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                        width: _expanded ? 220.0 : 24.0,
-                        height: 50,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Expanded(
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children:
-                                    List.generate(_colors.length, (index) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        selectedColor = _colors[index];
-                                        _currentColor = selectedColor;
-                                      });
-                                    },
-                                    child: Container(
-                                      width: 20,
-                                      height: 20,
-                                      margin: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: _colors[index],
-                                        shape: BoxShape.circle,
-                                        border: selectedColor == _colors[index]
-                                            ? Border.all(
-                                                color: Colors.black, width: 2.0)
-                                            : null,
-                                      ),
-                                    ),
-                                  );
-                                }),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _expanded = !_expanded;
-                                });
-                              },
-                              child: !_expanded
-                                  ? Container(
-                                      width: 20,
-                                      height: 20,
-                                      decoration: const BoxDecoration(
-                                        color: Color.fromARGB(158, 0, 0, 0),
-                                        shape: BoxShape.circle,
-                                      ),
-                                    )
-                                  : Icon(
-                                      Icons.close,
-                                      color: selectedColor,
-                                    ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
               actions: <Widget>[

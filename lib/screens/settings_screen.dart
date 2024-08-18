@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shoppinglist/components/app_bar.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shoppinglist/screens/privacy.dart';
+import 'package:shoppinglist/services/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -23,15 +24,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Colors.yellow,
     Colors.orange,
     Colors.purple,
-    Colors.tealAccent,
+    const Color.fromARGB(255, 14, 196, 154),
   ];
   Color _currentColor = const Color.fromARGB(255, 20, 67, 117);
   bool _expanded = false;
   bool _nightMode = false;
+
   @override
   void initState() {
     super.initState();
     _getName();
+    _loadNightModeSetting();
   }
 
   Future<void> _getName() async {
@@ -48,20 +51,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _userName = documentSnapshot['displayName'];
             _connectId = documentSnapshot['connectId'];
           });
-        } else {
-          // Handle the case when the document does not exist
         }
-      } else {}
+      }
     } catch (e) {
       // Handle error (e.g., show an error message)
     }
   }
 
+  void _loadNightModeSetting() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    setState(() {
+      _nightMode = themeProvider.themeMode == ThemeMode.dark;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     final User? user = Provider.of<User?>(context);
     String name = _userName;
-    Color color = _currentColor;
+    Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
+
     if (name.isNotEmpty) {
       name = name[0].toUpperCase() + name.substring(1);
     }
@@ -72,7 +82,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Appbar(
           title: "הגדרות",
           backBtn: true,
-          color: color,
+          color: themeColor,
         ),
       ),
       body: Padding(
@@ -90,7 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     borderRadius: BorderRadius.circular(50),
                     child: CircleAvatar(
                       maxRadius: 40,
-                      backgroundColor: color,
+                      backgroundColor: themeColor,
                       child: Text(
                         name.isNotEmpty
                             ? name[0].toUpperCase()
@@ -114,21 +124,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     name,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
                     ),
                   ),
                   Text(
                     user!.email.toString(),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 10),
-            Divider(height: 1, indent: 50, endIndent: 50, color: color),
+            Divider(height: 1, indent: 50, endIndent: 50, color: themeColor),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -149,7 +157,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            Divider(height: 1, color: color),
+            Divider(height: 1, color: themeColor),
             const SizedBox(height: 10),
             const Text("תצוגה",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
@@ -181,6 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     setState(() {
                                       _currentColor = _colors[index];
                                     });
+                                    themeProvider.setThemeColor(_colors[index]);
                                   },
                                   child: Container(
                                     width: 20,
@@ -210,7 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     width: 20,
                                     height: 20,
                                     decoration: BoxDecoration(
-                                      color: color,
+                                      color: themeColor,
                                       shape: BoxShape.circle,
                                     ),
                                   )
@@ -235,7 +244,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     Icon(
                       Icons.sunny,
-                      color: color,
+                      color: themeColor,
                     ),
                   ],
                 ),
@@ -249,12 +258,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Switch(
                   value: _nightMode,
-                  onChanged: (value) => {
+                  onChanged: (value) {
                     setState(() {
-                      _nightMode = !_nightMode;
-                    })
+                      _nightMode = value;
+                    });
+                    themeProvider.toggleTheme();
                   },
-                  activeTrackColor: color,
+                  activeTrackColor: themeColor,
+                  inactiveThumbColor: themeColor,
+                  activeColor: Colors.white,
                 ),
                 Row(
                   children: [
@@ -267,14 +279,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     Icon(
                       Icons.nightlight,
-                      color: color,
+                      color: themeColor,
                     ),
                   ],
                 ),
               ],
             ),
             const SizedBox(height: 10),
-            Divider(height: 1, color: color),
+            Divider(height: 1, color: themeColor),
             const SizedBox(height: 10),
             const Text("אודות",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),

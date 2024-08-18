@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shoppinglist/services/theme_provider.dart';
 
 class BottomModalAddConnection extends StatefulWidget {
   const BottomModalAddConnection({super.key});
@@ -11,7 +12,6 @@ class BottomModalAddConnection extends StatefulWidget {
 }
 
 class _BottomModalState extends State<BottomModalAddConnection> {
-  final Color _currentColor = const Color.fromARGB(255, 20, 67, 117);
   final TextEditingController connectionIdController = TextEditingController();
   Map<String, dynamic>? foundUser;
   String? foundUserId;
@@ -119,7 +119,6 @@ class _BottomModalState extends State<BottomModalAddConnection> {
         ),
       );
     } catch (e) {
-      print('Error adding connection: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to add connection.'),
@@ -133,16 +132,18 @@ class _BottomModalState extends State<BottomModalAddConnection> {
   Widget build(BuildContext context) {
     final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     double screenHeight = MediaQuery.of(context).size.height;
-    Color selectedColor = _currentColor;
+    Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
+    final Color selectedColor =
+        Provider.of<ThemeProvider>(context).themeMode == ThemeMode.dark
+            ? Colors.white
+            : themeColor;
     final User? user = Provider.of<User?>(context, listen: false);
-
     return GestureDetector(
       child: Container(
         padding: const EdgeInsets.all(16.0),
         width: double.infinity,
         height: isKeyboardVisible ? screenHeight / 2 + 100 : null,
         decoration: BoxDecoration(
-          color: Colors.white,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -226,7 +227,7 @@ class _BottomModalState extends State<BottomModalAddConnection> {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           leading: CircleAvatar(
-                            backgroundColor: _currentColor,
+                            backgroundColor: themeColor,
                             child: Text(
                               foundUser!['displayName'][0]
                                   .toString()

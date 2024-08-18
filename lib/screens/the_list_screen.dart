@@ -12,7 +12,6 @@ class TheListScreen extends StatefulWidget {
   final String docId;
   final String uid;
   final Color color;
-  final Color textColor;
   final String listId;
   final List sharedWith;
   const TheListScreen(
@@ -23,7 +22,6 @@ class TheListScreen extends StatefulWidget {
       required this.docId,
       required this.uid,
       required this.color,
-      required this.textColor,
       required this.listId,
       required this.sharedWith})
       : super(key: key);
@@ -138,17 +136,7 @@ class _TheListScreenState extends State<TheListScreen> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(10),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                        blurRadius: 4,
-                                        color:
-                                            Color.fromARGB(255, 151, 151, 151),
-                                        offset: Offset(0, 2))
-                                  ],
-                                  color: Colors.white),
+                            child: Card(
                               child: ListTile(
                                 leading: Checkbox(
                                   value: listItems[index]['checked'],
@@ -173,7 +161,7 @@ class _TheListScreenState extends State<TheListScreen> {
                                       style: TextStyle(
                                           color: listItems[index]['checked']
                                               ? widget.color
-                                              : Colors.black,
+                                              : null,
                                           fontWeight: listItems[index]
                                                   ['checked']
                                               ? FontWeight.bold
@@ -185,8 +173,9 @@ class _TheListScreenState extends State<TheListScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.edit,
-                                          color: Colors.black),
+                                      icon: const Icon(
+                                        Icons.edit,
+                                      ),
                                       onPressed: () =>
                                           _editItem.showAlertDialog(
                                         context,
@@ -198,8 +187,9 @@ class _TheListScreenState extends State<TheListScreen> {
                                       ),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.delete,
-                                          color: Colors.black),
+                                      icon: const Icon(
+                                        Icons.delete,
+                                      ),
                                       onPressed: () async {
                                         setState(() {
                                           listItems.removeAt(index);
@@ -235,23 +225,20 @@ class _TheListScreenState extends State<TheListScreen> {
                 child: Positioned(
                   bottom: 20,
                   left: 10,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: widget.color,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: const [
-                        BoxShadow(
-                          blurRadius: 4,
-                          color: Color.fromARGB(255, 202, 202, 202),
+                  child: Material(
+                    elevation: 8,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: widget.color,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: TextButton(
+                        onPressed: () => {},
+                        child: const Text(
+                          "סיים רשימה",
+                          style: TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
                         ),
-                      ],
-                    ),
-                    child: TextButton(
-                      onPressed: () => {},
-                      child: const Text(
-                        "סיים רשימה",
-                        style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),

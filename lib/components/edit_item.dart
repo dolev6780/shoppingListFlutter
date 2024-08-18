@@ -24,7 +24,6 @@ class EditItem {
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
               elevation: 8,
-              backgroundColor: Colors.white,
               actionsAlignment: MainAxisAlignment.center,
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.start,

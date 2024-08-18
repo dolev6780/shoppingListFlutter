@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shoppinglist/components/popup_connections.dart';
+import 'package:shoppinglist/services/theme_provider.dart';
 import 'package:uuid/uuid.dart';
 
 class BottomModalCreateList extends StatefulWidget {
@@ -16,21 +17,10 @@ class BottomModalCreateList extends StatefulWidget {
 }
 
 class _BottomModalState extends State<BottomModalCreateList> {
-  Color _currentColor = const Color.fromARGB(255, 20, 67, 117);
-  bool _expanded = false;
   final TextEditingController listTitle = TextEditingController();
   bool warning = false;
   Timer? _warningTimer;
   final List<String> selectedUIDs = [];
-  final List<Color> _colors = [
-    const Color.fromARGB(255, 20, 67, 117),
-    Colors.red,
-    Colors.green,
-    Colors.yellow,
-    Colors.orange,
-    Colors.purple,
-    Colors.tealAccent,
-  ];
 
   @override
   void dispose() {
@@ -52,17 +42,14 @@ class _BottomModalState extends State<BottomModalCreateList> {
         ? "0${DateTime.now().month}"
         : "${DateTime.now().month}";
     var date = "$day/$month/${DateTime.now().year}";
-    String currentColorHex =
-        '#${_currentColor.value.toRadixString(16).substring(2)}';
 
     final docData = {
       "creator": email,
       "title": listTitle.text,
-      "list": [], // Assuming list is empty initially
+      "list": [],
       "date": date,
       "finished": false,
-      "color": currentColorHex,
-      "sharedWith": selectedUIDs, // Ensure this is a list of strings
+      "sharedWith": selectedUIDs,
       "listId": const Uuid().v4()
     };
 
@@ -91,7 +78,12 @@ class _BottomModalState extends State<BottomModalCreateList> {
         widget.onListCreated();
         listTitle.clear();
       } catch (e) {
-        print("Error creating list: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to create list.'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } else {
       setState(() {
@@ -110,14 +102,17 @@ class _BottomModalState extends State<BottomModalCreateList> {
   Widget build(BuildContext context) {
     final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     double screenHeight = MediaQuery.of(context).size.height;
-
+    Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
+    final Color selectedColor =
+        Provider.of<ThemeProvider>(context).themeMode == ThemeMode.dark
+            ? Colors.white
+            : themeColor;
     return GestureDetector(
       child: Container(
         padding: const EdgeInsets.all(16.0),
         width: double.infinity,
-        height: isKeyboardVisible ? screenHeight / 2 + 100 : null,
-        decoration: BoxDecoration(
-            color: Colors.white, borderRadius: BorderRadius.circular(20)),
+        height: isKeyboardVisible ? screenHeight / 2 + 150 : null,
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -130,11 +125,11 @@ class _BottomModalState extends State<BottomModalCreateList> {
                     IconButton(
                       onPressed: () {
                         PopupConnections()
-                            .showAlertDialog(context, selectedUIDs);
+                            .showAlertDialog(context, selectedUIDs, themeColor);
                       },
                       icon: Icon(
                         Icons.people,
-                        color: _currentColor,
+                        color: selectedColor,
                       ),
                     ),
                     Expanded(child: Container()),
@@ -143,7 +138,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
                 Text(
                   'רשימה חדשה',
                   style: TextStyle(
-                    color: _currentColor,
+                    color: selectedColor,
                     fontWeight: FontWeight.bold,
                     fontSize: 24,
                   ),
@@ -167,19 +162,19 @@ class _BottomModalState extends State<BottomModalCreateList> {
                         decoration: InputDecoration(
                           hintText: "שם הרשימה",
                           hintStyle: TextStyle(
-                              color: _currentColor,
+                              color: selectedColor,
                               fontWeight: FontWeight.bold),
-                          labelStyle: TextStyle(color: _currentColor),
-                          floatingLabelStyle: TextStyle(color: _currentColor),
+                          labelStyle: TextStyle(color: selectedColor),
+                          floatingLabelStyle: TextStyle(color: selectedColor),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: _currentColor),
+                            borderSide: BorderSide(color: selectedColor),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: _currentColor),
+                            borderSide: BorderSide(color: selectedColor),
                           ),
                         ),
                         textAlign: TextAlign.right,
-                        style: TextStyle(color: _currentColor),
+                        style: TextStyle(color: selectedColor),
                       ),
                     ),
                   ),
@@ -207,74 +202,6 @@ class _BottomModalState extends State<BottomModalCreateList> {
                         ),
                       )
                     : const SizedBox(height: 0),
-                Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _expanded = !_expanded;
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      width: _expanded ? 220.0 : 24.0,
-                      height: 50,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Expanded(
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: List.generate(_colors.length, (index) {
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _currentColor = _colors[index];
-                                    });
-                                  },
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    margin: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: _colors[index],
-                                      shape: BoxShape.circle,
-                                      border: _currentColor == _colors[index]
-                                          ? Border.all(
-                                              color: Colors.black, width: 2.0)
-                                          : null,
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _expanded = !_expanded;
-                              });
-                            },
-                            child: !_expanded
-                                ? Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: const BoxDecoration(
-                                      color: Color.fromARGB(158, 0, 0, 0),
-                                      shape: BoxShape.circle,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.close,
-                                    color: _currentColor,
-                                  ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
             Row(
@@ -284,7 +211,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
                   child: Text(
                     'בטל',
                     style: TextStyle(
-                        color: _currentColor, fontWeight: FontWeight.bold),
+                        color: selectedColor, fontWeight: FontWeight.bold),
                   ),
                 ),
                 TextButton(
@@ -292,7 +219,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
                   child: Text(
                     'צור רשימה',
                     style: TextStyle(
-                        color: _currentColor, fontWeight: FontWeight.bold),
+                        color: selectedColor, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

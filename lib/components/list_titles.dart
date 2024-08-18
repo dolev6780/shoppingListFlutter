@@ -1,9 +1,14 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:shoppinglist/components/overlap_circle_avatar.dart';
 import 'package:shoppinglist/screens/the_list_screen.dart';
 import 'package:shoppinglist/components/edit_list.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shoppinglist/services/theme_provider.dart';
 
 class ListTitles extends StatefulWidget {
   final Future<void> Function() refreshLists;
@@ -50,7 +55,6 @@ class _ListTitlesState extends State<ListTitles> {
   Future<List<Map<String, dynamic>>> fetchPendingListTitles() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user == null) return [];
-
     try {
       var subCollectionRef = FirebaseFirestore.instance
           .collection('users')
@@ -62,7 +66,6 @@ class _ListTitlesState extends State<ListTitles> {
       return querySnapshot.docs
           .map((doc) => {
                 'type': 'pending',
-                'color': doc.data()['color'] ?? '#FFFFFF',
                 'creator': doc.data()['creator'] ?? 'Unknown',
                 'date': doc.data()['date'] ?? 'No date',
                 'finished': doc.data()['finished'] ?? false,
@@ -121,7 +124,6 @@ class _ListTitlesState extends State<ListTitles> {
     if (user == null) return;
     try {
       final docData = {
-        "color": item['color'],
         "creator": item['creator'],
         "date": item['date'],
         "finished": item['finished'],
@@ -172,84 +174,124 @@ class _ListTitlesState extends State<ListTitles> {
 
   Widget buildPendingListCard(Map<String, dynamic> item) {
     var docId = item['docId'];
-    var creator = item['creator'];
+    String creator = item['creator'];
+    List<String> sharedWith = [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ];
+
+    Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
+    Color getRandomColor() {
+      Random random = Random();
+      const int maxColorValue = 200;
+      return Color.fromARGB(
+        255,
+        random.nextInt(maxColorValue),
+        random.nextInt(maxColorValue),
+        random.nextInt(maxColorValue),
+      );
+    }
 
     return Animate(
-      effects: [ShakeEffect()],
+      effects: const [ShakeEffect()],
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Card(
           margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-          child: ListTile(
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(item['title']),
-                  const SizedBox(width: 20),
-                  Text(
-                    item['date'],
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: Colors.black,
-                    ),
-                  )
-                ],
-              ),
-              subtitle: Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  verticalDirection: VerticalDirection.up,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'רוצה לשתף אותך ברשימה חדשה',
-                      textAlign: TextAlign.start,
-                      style: TextStyle(fontSize: 12),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: ActionChip(
+                        label: const Text(":מאת"),
+                        avatar: CircleAvatar(
+                          radius: 10,
+                          child: Text(
+                            creator.substring(0, 1).toUpperCase(),
+                            textAlign: TextAlign.start,
+                            style: const TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          backgroundColor: themeColor,
+                        ),
+                        onPressed: () => {},
+                        tooltip: creator,
+                      ),
                     ),
                     Text(
-                      '$creator',
-                      textAlign: TextAlign.start,
+                      item['date'],
                       style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
+                        fontSize: 10,
+                      ),
+                    )
                   ],
                 ),
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    onPressed: () => {handlePendingList(true, docId, item)},
-                    icon: const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 30,
-                      shadows: [
-                        BoxShadow(
-                            offset: Offset(0, 2),
-                            blurRadius: 4,
-                            color: Color.fromARGB(255, 184, 184, 184))
-                      ],
+              ListTile(
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(item['title']),
+                    const SizedBox(width: 20),
+                  ],
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [],
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () => {handlePendingList(true, docId, item)},
+                      icon: const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 30,
+                      ),
                     ),
-                  ),
-                  IconButton(
+                    IconButton(
                       onPressed: () => {handlePendingList(false, docId, item)},
                       icon: const Icon(
                         Icons.cancel,
                         color: Colors.red,
                         size: 30,
-                        shadows: [
-                          BoxShadow(
-                              offset: Offset(0, 2),
-                              blurRadius: 4,
-                              color: Color.fromARGB(255, 184, 184, 184))
-                        ],
-                      )),
-                ],
+                      ),
+                    ),
+                  ],
+                ),
+                leading: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.list,
+                      color: themeColor,
+                    )
+                  ],
+                ),
               ),
-              leading: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [Icon(Icons.list)],
-              )),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OverlapCircleAvatars(
+                    users: sharedWith, getRandomColor: getRandomColor),
+              )
+            ],
+          ),
         ),
       ),
     );
@@ -257,9 +299,31 @@ class _ListTitlesState extends State<ListTitles> {
 
   Widget buildRegularListCard(Map<String, dynamic> item) {
     var docId = item['docId'];
-    Color backgroundColor =
-        parseColor(item['color']) ?? const Color.fromARGB(255, 20, 67, 117);
-    Color textColor = parseColor(item['textColor']) ?? Colors.white;
+    Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
+    List<String> sharedWith = [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ];
+    Color getRandomColor() {
+      Random random = Random();
+      const int maxColorValue = 200;
+      return Color.fromARGB(
+        255,
+        random.nextInt(maxColorValue),
+        random.nextInt(maxColorValue),
+        random.nextInt(maxColorValue),
+      );
+    }
+
+    String creator = item['creator'];
 
     return Animate(
       effects: const [FlipEffect()],
@@ -267,103 +331,124 @@ class _ListTitlesState extends State<ListTitles> {
         textDirection: TextDirection.rtl,
         child: Card(
           margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-          child: ListTile(
-            title: Text(
-              item['title'],
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Directionality(
+                textDirection: TextDirection.ltr,
+                child: ActionChip(
+                  label: const Text(":מאת"),
+                  avatar: CircleAvatar(
+                    radius: 10,
+                    child: Text(
+                      creator.substring(0, 1).toUpperCase(),
+                      textAlign: TextAlign.start,
+                      style: const TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    backgroundColor: themeColor,
+                  ),
+                  onPressed: () => {},
+                  tooltip: creator,
+                ),
               ),
-            ),
-            leading: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+              ListTile(
+                title: Text(
+                  item['title'],
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                leading: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    PopupMenuButton<String>(
-                      color: Colors.white,
-                      position: PopupMenuPosition.under,
-                      onSelected: (String result) async {
-                        if (result == 'delete') {
-                          await deleteList(docId);
-                        }
-                        if (result == 'edit') {
-                          EditList(
-                            listId: item['listId'],
-                            initialTitle: item['title'],
-                            initialColor: backgroundColor,
-                            sharedWith: item['sharedWith'],
-                          ).showAlertDialog(context);
-                        }
-                      },
-                      itemBuilder: (BuildContext context) => [
-                        const PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Icon(Icons.delete,
-                                  color: Color.fromARGB(255, 20, 67, 117)),
-                              Text(
-                                "מחק רשימה",
-                                style: TextStyle(color: Colors.black),
-                              )
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem<String>(
-                          value: 'edit',
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Icon(Icons.edit,
-                                  color: Color.fromARGB(255, 20, 67, 117)),
-                              Text(
-                                "ערוך רשימה",
-                                style: TextStyle(color: Colors.black),
-                              )
-                            ],
-                          ),
+                    Row(
+                      children: [
+                        PopupMenuButton<String>(
+                          position: PopupMenuPosition.under,
+                          onSelected: (String result) async {
+                            if (result == 'delete') {
+                              await deleteList(docId);
+                            }
+                            if (result == 'edit') {
+                              EditList(
+                                listId: item['listId'],
+                                initialTitle: item['title'],
+                                initialColor: themeColor,
+                                sharedWith: item['sharedWith'],
+                              ).showAlertDialog(context);
+                            }
+                          },
+                          itemBuilder: (BuildContext context) => [
+                            PopupMenuItem<String>(
+                              value: 'delete',
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  Icon(Icons.delete, color: themeColor),
+                                  const Text(
+                                    "מחק רשימה",
+                                  )
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'edit',
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  Icon(Icons.edit, color: themeColor),
+                                  const Text(
+                                    "ערוך רשימה",
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                          icon: Icon(Icons.more_vert, color: themeColor),
                         ),
                       ],
-                      icon: const Icon(Icons.more_vert,
-                          color: Color.fromARGB(255, 20, 67, 117)),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.list,
+                      size: 32,
                     ),
                   ],
                 ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.list,
-                  size: 32,
-                ),
-              ],
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios),
-            subtitle: Text(
-              item['date'],
-              style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 77, 77, 77)),
-            ),
-            iconColor: const Color.fromARGB(255, 20, 67, 117),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (BuildContext context) => TheListScreen(
-                    creator: item['creator'],
-                    title: item['title'],
-                    list: item['list'],
-                    docId: docId,
-                    uid: FirebaseAuth.instance.currentUser!.uid,
-                    color: backgroundColor,
-                    textColor: textColor,
-                    listId: item['listId'],
-                    sharedWith: item['sharedWith'],
+                trailing: const Icon(Icons.arrow_forward_ios),
+                subtitle: Text(
+                  item['date'],
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              );
-            },
+                iconColor: themeColor,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute<void>(
+                      builder: (BuildContext context) => TheListScreen(
+                        creator: item['creator'],
+                        title: item['title'],
+                        list: item['list'],
+                        docId: docId,
+                        uid: FirebaseAuth.instance.currentUser!.uid,
+                        color: themeColor,
+                        listId: item['listId'],
+                        sharedWith: item['sharedWith'],
+                      ),
+                    ),
+                  );
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: OverlapCircleAvatars(
+                    users: sharedWith, getRandomColor: getRandomColor),
+              )
+            ],
           ),
         ),
       ),

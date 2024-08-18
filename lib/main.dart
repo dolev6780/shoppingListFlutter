@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shoppinglist/services/auth_provider.dart';
+import 'package:shoppinglist/services/theme_provider.dart';
 import 'package:shoppinglist/services/wrapper.dart';
 import 'firebase_options.dart';
 
@@ -11,15 +12,18 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
-}
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key});
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
+  // Create an instance of ThemeProvider to load the theme color
+  final themeProvider = ThemeProvider();
+  await themeProvider
+      .loadThemeColorAndMode(); // Load theme color before app starts
+
+  runApp(
+    MultiProvider(
       providers: [
+        ChangeNotifierProvider<ThemeProvider>.value(
+          value: themeProvider,
+        ),
         ChangeNotifierProvider<AuthProviding>(
           create: (_) => AuthProviding(),
         ),
@@ -28,10 +32,24 @@ class MyApp extends StatelessWidget {
           initialData: null,
         ),
       ],
-      child: const MaterialApp(
-        title: 'List',
-        home: Wrapper(),
-      ),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'List',
+          theme: themeProvider.currentTheme,
+          home: const Wrapper(),
+        );
+      },
     );
   }
 }

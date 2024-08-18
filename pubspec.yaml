@@ -38,7 +38,6 @@ dependencies:
   firebase_core: ^2.10.0
   firebase_auth: ^4.4.2
   cloud_firestore: ^4.5.2
-  share: ^2.0.4
   searchfield: ^0.8.0
   icons_plus: ^4.0.0
   google_sign_in: ^6.1.6
@@ -52,7 +51,8 @@ dependencies:
   uuid: ^4.4.2
   share_plus: ^8.0.0
   awesome_notifications: 0.9.3+1
-
+  shared_preferences: ^2.0.15
+ 
  
 dev_dependencies:
   flutter_test:

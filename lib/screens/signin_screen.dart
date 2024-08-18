@@ -211,7 +211,9 @@ class _SignInScreenState extends State<SignInScreen> {
                                     "הירשם עם גוגל",
                                     style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                        fontSize: 16,
+                                        color:
+                                            Color.fromARGB(255, 20, 67, 117)),
                                   ),
                                 )
                               ],

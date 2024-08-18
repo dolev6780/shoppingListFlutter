@@ -36,17 +36,19 @@ class AuthService {
           googleUser.email, googleUser.displayName.toString());
 
       // Navigate to the HomeScreen
-      // ignore: use_build_context_synchronously
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const HomeScreen(),
-        ),
-      );
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) => const HomeScreen(),
+          ),
+        );
+      }
 
       return userCredential.user;
     } catch (e) {
-      print("Error during Google sign-in: $e");
+      _showAlert(context,
+          "An error occurred during Google sign-in. Please try again.");
       return null;
     }
   }
@@ -58,17 +60,20 @@ class AuthService {
       final DocumentReference newDocRef = collectionRef.doc(userId);
 
       final String connectId = const Uuid().v4();
-
+      const Color defaultColor = Color.fromARGB(255, 20, 67, 117);
+      String currentColorHex =
+          '#${defaultColor.value.toRadixString(16).substring(2)}';
       final docData = {
         "email": email,
         "displayName": displayName,
         "connections": [],
         "connectId": connectId,
+        "themeColor": currentColorHex
       };
 
       await newDocRef.set(docData);
     } catch (e) {
-      print("Error creating user profile: $e");
+      // Handle error silently or log it
     }
   }
 
@@ -89,19 +94,18 @@ class AuthService {
         password: password,
       );
 
-      // Hide the loading indicator after successful sign-in
-      Navigator.pop(context);
-
-      // Navigate to the home screen on successful sign-in
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute<void>(
-          builder: (BuildContext context) => const HomeScreen(),
-        ),
-      );
+      // Hide the loading indicator and navigate to the home screen
+      if (context.mounted) {
+        Navigator.pop(context); // Close the loading indicator
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) => const HomeScreen(),
+          ),
+        );
+      }
     } on FirebaseAuthException catch (e) {
-      // Hide the loading indicator on authentication error
-      Navigator.pop(context);
+      Navigator.pop(context); // Hide the loading indicator
 
       String errorMessage;
       if (e.code == 'user-not-found') {
@@ -125,18 +129,18 @@ class AuthService {
         password: password,
       );
 
-      // Check if the user was successfully created
       if (userCredential.user != null) {
         await _createUserProfileDoc(email, displayName);
 
         // Navigate to the HomeScreen
-        // ignore: use_build_context_synchronously
-        await Navigator.pushReplacement(
-          context,
-          MaterialPageRoute<void>(
-            builder: (BuildContext context) => const HomeScreen(),
-          ),
-        );
+        if (context.mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) => const HomeScreen(),
+            ),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage;
@@ -149,8 +153,6 @@ class AuthService {
       }
 
       _showAlert(context, errorMessage);
-    } catch (e) {
-      print(e);
     }
   }
 

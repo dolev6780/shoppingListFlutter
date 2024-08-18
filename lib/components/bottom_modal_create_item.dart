@@ -99,8 +99,7 @@ class _BottomModalState extends State<BottomModalCreateItem> {
         padding: const EdgeInsets.all(16.0),
         width: double.infinity,
         height: isKeyboardVisible ? screenHeight / 2 + 50 : null,
-        decoration: BoxDecoration(
-            color: Colors.white, borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

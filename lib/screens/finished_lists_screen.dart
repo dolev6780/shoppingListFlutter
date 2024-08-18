@@ -3,7 +3,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shoppinglist/screens/home_screen.dart';
+import 'package:shoppinglist/services/theme_provider.dart';
 
 import '../components/app_bar.dart';
 import 'my_connections_screen.dart';
@@ -84,13 +86,14 @@ class _FinishedListsScreenState extends State<FinishedListsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
     return Scaffold(
-      appBar: const PreferredSize(
-          preferredSize: Size.fromHeight(kToolbarHeight),
+      appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
           child: Appbar(
             title: "היסטוריית רשימות",
             backBtn: true,
-            color: Color.fromARGB(255, 20, 67, 117),
+            color: themeColor,
           )),
       body: Container(
         padding: const EdgeInsets.all(16.0),

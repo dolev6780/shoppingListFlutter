@@ -6,6 +6,7 @@ import 'package:shoppinglist/components/bottom_modal_create_list.dart';
 import 'package:shoppinglist/components/drawer.dart';
 import 'package:shoppinglist/components/list_titles.dart';
 import 'package:shoppinglist/screens/signin_screen.dart';
+import 'package:shoppinglist/services/theme_provider.dart';
 import '../components/app_bar.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -101,10 +102,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (name.isNotEmpty) {
       name = name[0].toUpperCase() + name.substring(1);
     }
-    Color backgroundColor = Colors.white;
-    Color themeColor = const Color.fromARGB(255, 20, 67, 117);
+    Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
     return Scaffold(
-      backgroundColor: backgroundColor,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Appbar(
@@ -118,27 +117,26 @@ class _HomeScreenState extends State<HomeScreen> {
           onRefresh: _refreshLists,
           child: ListTitles(refreshLists: _refreshLists)),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: SizedBox(
-        height: 70,
-        width: 70,
-        child: FloatingActionButton(
-          onPressed: () => {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              useSafeArea: true,
-              builder: (context) => BottomModalCreateList(
-                onListCreated: _refreshLists,
-              ),
-            )
-          },
-          backgroundColor: themeColor,
-          shape: const CircleBorder(),
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 32,
-          ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            builder: (context) => BottomModalCreateList(
+              onListCreated: _refreshLists,
+            ),
+          )
+        },
+        backgroundColor: themeColor,
+        label: const Text(
+          "רשימה חדשה",
+          style: TextStyle(color: Colors.white),
+        ),
+        icon: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 32,
         ),
       ),
     );
