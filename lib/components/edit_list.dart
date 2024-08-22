@@ -1,9 +1,11 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shoppinglist/components/popup_connections.dart';
+import 'package:shoppinglist/components/popup_update_connections.dart';
 import 'package:shoppinglist/screens/home_screen.dart';
 
 class EditList {
@@ -36,8 +38,8 @@ class EditList {
                 children: [
                   IconButton(
                     onPressed: () {
-                      // PopupConnections().showAlertDialog(
-                      //       context, selectedUIDs, selectedColor);
+                      PopupUpdateConnections()
+                          .showAlertDialog(context, sharedWith, _currentColor);
                     },
                     icon: Icon(
                       Icons.group_add,
@@ -146,7 +148,9 @@ class EditList {
 
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     final CollectionReference collectionRef = firestore.collection("users");
-
+    final DocumentSnapshot documentSnapshot =
+        await firestore.collection('users').doc(user!.uid).get();
+    final name = documentSnapshot['displayName'];
     var day = DateTime.now().day < 10
         ? "0${DateTime.now().day}"
         : "${DateTime.now().day}";
@@ -157,18 +161,35 @@ class EditList {
     String currentColorHex =
         '#${_currentColor.value.toRadixString(16).substring(2)}';
     final docData = {
-      "creator": email,
+      "creator": name,
       "title": listTitle.text,
       "date": date,
       "color": currentColorHex,
+      "sharedWith": sharedWith,
+      "listId": listId
     };
-
     if (email.isNotEmpty && listTitle.text.isNotEmpty) {
       try {
         // Retrieve the list of users who have access to this list
-        List<String> sharedWithUsers = List<String>.from(sharedWith);
+        for (var uidMap in sharedWith) {
+          String uid = uidMap['id']!;
+          DocumentReference userDocRef;
+          if (uid != user.uid) {
+            userDocRef = firestore
+                .collection("users")
+                .doc(uid)
+                .collection("pendingLists")
+                .doc();
+            await userDocRef.set(docData);
+          }
+        }
+        List<String> ids = sharedWith
+            .where(
+                (item) => item is Map<String, dynamic> && item['id'] is String)
+            .map((item) => item['id'] as String)
+            .toList();
 
-        for (String sharedUserId in sharedWithUsers) {
+        for (String sharedUserId in ids) {
           // Query and update documents in 'lists' collection
           final QuerySnapshot listsSnapshot = await collectionRef
               .doc(sharedUserId)
@@ -200,7 +221,11 @@ class EditList {
           ),
         );
       } catch (e) {
-        print("Error updating list: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update list: $e'),
+          ),
+        );
       }
     } else {
       setState(() {

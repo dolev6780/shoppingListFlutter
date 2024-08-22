@@ -4,15 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:shoppinglist/screens/my_connections_screen.dart';
 import 'package:shoppinglist/services/data_service.dart';
 
-class PopupConnections {
+class PopupUpdateConnections {
   final DataService dataService = DataService();
 
-  void showAlertDialog(BuildContext context,
-      List<Map<String, String>> selectedUIDs, Color themeColor) async {
+  Future<void> showAlertDialog(BuildContext context,
+      List<dynamic> currentSharedWith, Color themeColor) async {
     List<Map<String, dynamic>> connections =
         await dataService.fetchConnections();
-    List<Map<String, String>> toShareSelectedUIDs = List.from(selectedUIDs);
 
+    // Prepare a list of IDs for quick lookup
+    Set<String> currentSharedIds = currentSharedWith
+        .whereType<Map<String, dynamic>>()
+        .map((item) => item['id'].toString())
+        .toSet();
+
+    // Prepare list of selected users with proper conversion
+    List<Map<String, String>> toShareSelectedUIDs = currentSharedWith
+        .whereType<Map<String, dynamic>>()
+        .map((item) => {
+              'id': item['id'].toString(),
+              'name': item['name'].toString(),
+            })
+        .toList();
     showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -71,12 +84,12 @@ class PopupConnections {
                               itemCount: connections.length,
                               itemBuilder: (context, index) {
                                 var connection = connections[index];
-                                String connectionId = connection['id']
-                                    .toString(); //get connection id
-                                String connectionName = connection['name']
-                                    .toString(); // get connection name
-                                bool isSelected = toShareSelectedUIDs.any(
-                                    (element) => element['id'] == connectionId);
+                                String connectionId =
+                                    connection['id'].toString();
+                                String connectionName =
+                                    connection['name'].toString();
+                                bool isSelected =
+                                    currentSharedIds.contains(connectionId);
 
                                 return Directionality(
                                   textDirection: TextDirection.rtl,
@@ -85,9 +98,7 @@ class PopupConnections {
                                       radius: 12,
                                       backgroundColor: themeColor,
                                       child: Text(
-                                        connectionName[0]
-                                            .toString()
-                                            .toUpperCase(),
+                                        connectionName[0].toUpperCase(),
                                         style: const TextStyle(
                                             color: Colors.white, fontSize: 10),
                                       ),
@@ -106,16 +117,18 @@ class PopupConnections {
                                       onChanged: (bool? value) {
                                         setState(() {
                                           if (value == true) {
-                                            if (!toShareSelectedUIDs.any(
-                                                (element) =>
-                                                    element['id'] ==
-                                                    connectionId)) {
+                                            if (!currentSharedIds
+                                                .contains(connectionId)) {
+                                              currentSharedIds
+                                                  .add(connectionId);
                                               toShareSelectedUIDs.add({
                                                 'id': connectionId,
                                                 'name': connectionName
                                               });
                                             }
                                           } else {
+                                            currentSharedIds
+                                                .remove(connectionId);
                                             toShareSelectedUIDs.removeWhere(
                                                 (element) =>
                                                     element['id'] ==
@@ -127,11 +140,13 @@ class PopupConnections {
                                     onTap: () {
                                       setState(() {
                                         if (isSelected) {
+                                          currentSharedIds.remove(connectionId);
                                           toShareSelectedUIDs.removeWhere(
                                               (element) =>
                                                   element['id'] ==
                                                   connectionId);
                                         } else {
+                                          currentSharedIds.add(connectionId);
                                           toShareSelectedUIDs.add({
                                             'id': connectionId,
                                             'name': connectionName
@@ -160,8 +175,8 @@ class PopupConnections {
                 ),
                 TextButton(
                   onPressed: () {
-                    selectedUIDs.clear();
-                    selectedUIDs.addAll(toShareSelectedUIDs);
+                    currentSharedWith.clear();
+                    currentSharedWith.addAll(toShareSelectedUIDs);
                     Navigator.pop(context);
                   },
                   child: Text(

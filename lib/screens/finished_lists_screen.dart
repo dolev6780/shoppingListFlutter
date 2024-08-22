@@ -1,14 +1,9 @@
-// ignore_for_file: avoid_print
-
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shoppinglist/screens/home_screen.dart';
 import 'package:shoppinglist/services/theme_provider.dart';
-
 import '../components/app_bar.dart';
-import 'my_connections_screen.dart';
 
 class FinishedListsScreen extends StatefulWidget {
   const FinishedListsScreen({super.key});
@@ -18,122 +13,106 @@ class FinishedListsScreen extends StatefulWidget {
 }
 
 class _FinishedListsScreenState extends State<FinishedListsScreen> {
-  User? _user;
-  List<Map<String, dynamic>> finishedLists = [];
-  late QuerySnapshot snapshot;
-  bool finish = false;
-  @override
-  void initState() {
-    super.initState();
-    _user = FirebaseAuth.instance.currentUser;
-    var subCollectionRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc("${_user?.uid}")
-        .collection('shoplists');
-    if (!(_user?.uid == null)) {
-      subCollectionRef.snapshots().listen((querySnapshot) {
-        try {
-          snapshot = querySnapshot;
-          List<Map<String, dynamic>> newFinishedLists = [];
-          querySnapshot.docs
-              .where((doc) => doc.data()['finished'] == true)
-              .forEach((doc) {
-            newFinishedLists.add({
-              'title': doc.data()['title'],
-              'date': doc.data()['date'],
-              'list': doc.data()['list']
-            });
-          });
-          setState(() {
-            finishedLists = newFinishedLists;
-          });
-        } catch (e, stackTrace) {
-          print('Error in subCollectionRef.snapshots().listen(): $e');
-          print('$stackTrace');
-        }
-      });
-    } else {
-      finishedLists = [];
-    }
-  }
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  int _currentIndex = 2;
+  Future<List<Map<String, dynamic>>> fetchFinishedLists() async {
+    try {
+      final User? user = Provider.of<User?>(context, listen: false);
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+      if (user == null) {
+        throw Exception("User not authenticated");
+      }
 
-    switch (_currentIndex) {
-      case 0:
-        Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => const HomeScreen(),
-            ));
-        break;
-      case 1:
-        Navigator.push(
-            context,
-            MaterialPageRoute<void>(
-              builder: (BuildContext context) => const MyConnectionsScreen(),
-            ));
-        break;
-      case 2:
-        break;
+      QuerySnapshot snapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('lists')
+          .where('finished', isEqualTo: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => doc.data() as Map<String, dynamic>)
+          .toList();
+    } catch (e) {
+      print('Error fetching finished lists: $e');
+      return [];
     }
   }
 
   @override
   Widget build(BuildContext context) {
     Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
+
     return Scaffold(
       appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight),
-          child: Appbar(
-            title: "היסטוריית רשימות",
-            backBtn: true,
-            color: themeColor,
-          )),
-      body: Container(
-        padding: const EdgeInsets.all(16.0),
-        child: finishedLists.isNotEmpty
-            ? ListView.builder(
-                itemCount: finishedLists.length,
-                addAutomaticKeepAlives: true,
-                itemBuilder: (BuildContext context, int index) {
-                  return Column(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                            color: Colors.blue[400],
-                            borderRadius: BorderRadius.circular(20)),
-                        child: TextButton(
-                          onPressed: () {},
-                          child: ListTile(
-                            title: Text(
-                              finishedLists[index]['title'],
-                              textDirection: TextDirection.rtl,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700),
-                            ),
-                            subtitle: Text(
-                              finishedLists[index]['date'],
-                              textDirection: TextDirection.rtl,
-                              style: TextStyle(color: Colors.grey.shade50),
-                            ),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Appbar(
+          title: "היסטוריית רשימות",
+          color: themeColor,
+          homeBtn: true,
+        ),
+      ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: fetchFinishedLists(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text(
+                "לא נמצאו רשימות היסטוריות",
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w200,
+                  color: Color.fromARGB(255, 255, 0, 0),
+                ),
+              ),
+            );
+          } else {
+            final finishedLists = snapshot.data!;
+            return ListView.builder(
+              itemCount: finishedLists.length,
+              itemBuilder: (context, index) {
+                final list = finishedLists[index];
+                return Directionality(
+                  textDirection: TextDirection.rtl,
+                  child: Card(
+                    child: ExpansionTile(
+                      leading: const Icon(Icons.more_vert),
+                      title: ListTile(
+                        title: Text(list['title'] ?? 'No Title'),
+                        subtitle: Text('יוצר רשימה: ${list['creator'] ?? ''}'),
+                      ),
+                      subtitle: Text('נוצר ב: ${list['date'] ?? ''}'),
+                      children: [
+                        const Divider(),
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            "רשימת הפריטים",
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      )
-                    ],
-                  );
-                },
-              )
-            : const SizedBox(),
+                        ...?list['list']?.map<Widget>((item) {
+                          return ListTile(
+                            title: Text(item['item'] ?? 'No Name'),
+                            subtitle: Text(
+                              'יוצר: ${item['creator'] ?? ''}',
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          }
+        },
       ),
     );
   }

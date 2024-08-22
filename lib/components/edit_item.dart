@@ -1,22 +1,24 @@
-import 'dart:async';
+// ignore_for_file: use_build_context_synchronously
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class EditItem {
   final TextEditingController listItem = TextEditingController();
   bool warning = false;
-  Timer? _warningTimer;
 
   void showAlertDialog(BuildContext context, Color color, String docId,
-      VoidCallback onItemCreated, item, index) {
+      VoidCallback onItemCreated, item, index, sharedWith, listId) {
     Color selectedTextColor = color;
 
     if (item != null) {
       listItem.text = item;
     }
+    List<dynamic> sharedWithList = sharedWith;
+    List<String> ids = sharedWithList
+        .where((item) => item is Map<String, dynamic> && item['id'] is String)
+        .map((item) => item['id'] as String)
+        .toList();
     showDialog<String>(
       context: context,
       builder: (BuildContext context) {
@@ -110,8 +112,8 @@ class EditItem {
                 ),
                 TextButton(
                   onPressed: () {
-                    updateItemsInList(
-                        context, setState, docId, onItemCreated, index);
+                    updateItemsInList(context, setState, docId, onItemCreated,
+                        index, ids, listId);
                   },
                   child: Text(
                     item == null ? 'צור משימה' : 'ערוך משימה',
@@ -127,60 +129,56 @@ class EditItem {
     );
   }
 
-  void updateItemsInList(BuildContext context, StateSetter setState,
-      String docId, VoidCallback onItemCreated, int index) async {
-    final User? user = Provider.of<User?>(context, listen: false);
+  void updateItemsInList(
+      BuildContext context,
+      StateSetter setState,
+      String docId,
+      VoidCallback onItemCreated,
+      int index,
+      List<String> ids,
+      String listId) async {
+    final CollectionReference collectionRef =
+        FirebaseFirestore.instance.collection("users");
     var time = "${DateTime.now().hour + 3}:${DateTime.now().minute}";
     try {
-      var docRef =
-          FirebaseFirestore.instance.collection('users').doc("${user?.uid}");
-      var subcollectionRef = docRef.collection('lists');
-      var documentSnapshot = await subcollectionRef.doc(docId).get();
-      List<dynamic> list = documentSnapshot.data()?['list'] ?? [];
-      list[index]['item'] = listItem.text;
-      list[index]['time'] = time;
-      await subcollectionRef.doc(docId).update({'list': list});
-      onItemCreated();
-      listItem.text = "";
-      Navigator.pop(context, 'OK');
-    } catch (e) {
-      print('Error updating subcollection field: $e');
-    }
-  }
+      for (String sharedUserId in ids) {
+        // Query and update documents in 'lists' collection
+        final QuerySnapshot listsSnapshot = await collectionRef
+            .doc(sharedUserId)
+            .collection("lists")
+            .where("listId", isEqualTo: listId)
+            .get();
 
-  void editItemInList(BuildContext context, StateSetter setState, String docId,
-      VoidCallback onItemCreated, int index) async {
-    final User? user = Provider.of<User?>(context, listen: false);
-    var time = "${DateTime.now().hour + 3}:${DateTime.now().minute}";
-    try {
-      if (listItem.text.isEmpty) {
-        setState(() {
-          warning = true;
-        });
-        _warningTimer?.cancel();
-        _warningTimer = Timer(const Duration(seconds: 5), () {
-          setState(() {
-            warning = false;
-          });
-        });
-        return;
+        for (var doc in listsSnapshot.docs) {
+          List<dynamic> list = doc['list'] ?? [];
+          list[index]['item'] = listItem.text;
+          list[index]['time'] = time;
+          await doc.reference.update({'list': list});
+        }
+
+        // Query and update documents in 'pendingLists' collection
+        final QuerySnapshot pendingListsSnapshot = await collectionRef
+            .doc(sharedUserId)
+            .collection("pendingLists")
+            .where("listId", isEqualTo: listId)
+            .get();
+
+        for (var doc in pendingListsSnapshot.docs) {
+          List<dynamic> list = doc['list'] ?? [];
+          list[index]['item'] = listItem.text;
+          list[index]['time'] = time;
+          await doc.reference.update({'list': list});
+        }
       }
-      var docRef =
-          FirebaseFirestore.instance.collection('users').doc("${user?.uid}");
-      var subcollectionRef = docRef.collection('lists');
-      var documentSnapshot = await subcollectionRef.doc(docId).get();
-      List<dynamic> list = documentSnapshot.data()?['list'] ?? [];
-      list[index] = {
-        'item': listItem.text,
-        'time': time,
-        'checked': list[index]['checked']
-      };
-      await subcollectionRef.doc(docId).update({'list': list});
       onItemCreated();
       listItem.text = "";
       Navigator.pop(context, 'OK');
     } catch (e) {
-      print('Error updating subcollection field: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update item: $e'),
+        ),
+      );
     }
   }
 }

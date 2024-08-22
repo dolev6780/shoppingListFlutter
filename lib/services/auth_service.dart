@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -53,10 +55,29 @@ class AuthService {
     }
   }
 
+  Future<bool> doesUserExist(String field, String value) async {
+    // Reference to the Firestore collection
+    CollectionReference collectionRef =
+        FirebaseFirestore.instance.collection('users');
+
+    // Query to check if any document contains the specified field value
+    QuerySnapshot querySnapshot =
+        await collectionRef.where(field, isEqualTo: value).limit(1).get();
+
+    // Check if any documents were returned by the query
+    return querySnapshot.docs.isNotEmpty;
+  }
+
   Future<void> _createUserProfileDoc(String email, String displayName) async {
     try {
       String? userId = _auth.currentUser?.uid;
       final CollectionReference collectionRef = _firestore.collection("users");
+      bool existUser =
+          await doesUserExist('email', currentUser!.email.toString());
+      if (existUser) {
+        print("exist");
+        return;
+      }
       final DocumentReference newDocRef = collectionRef.doc(userId);
 
       final String connectId = const Uuid().v4();

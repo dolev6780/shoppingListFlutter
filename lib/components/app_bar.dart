@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:shoppinglist/screens/home_screen.dart';
 
 class Appbar extends StatelessWidget {
   final String title;
-  final bool backBtn;
   final Color color;
+  final bool homeBtn;
   const Appbar(
       {super.key,
       required this.title,
-      required this.backBtn,
-      required this.color});
+      required this.color,
+      required this.homeBtn});
 
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
@@ -20,13 +21,24 @@ class Appbar extends StatelessWidget {
         decoration: const BoxDecoration(),
       ),
       centerTitle: true,
-      automaticallyImplyLeading: backBtn,
+      automaticallyImplyLeading: false,
       title: Text(
         title,
         style: TextStyle(color: textColor),
       ),
       backgroundColor: color,
       iconTheme: IconThemeData(color: textColor),
+      leading: homeBtn
+          ? IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () async => {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                )
+              },
+            )
+          : null,
     );
   }
 }

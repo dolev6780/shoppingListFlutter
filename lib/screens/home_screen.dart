@@ -103,40 +103,41 @@ class _HomeScreenState extends State<HomeScreen> {
       name = name[0].toUpperCase() + name.substring(1);
     }
     Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: Appbar(
-          title: "הרשימות שלי",
-          backBtn: false,
-          color: themeColor,
+    return PopScope(
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(kToolbarHeight),
+          child: Appbar(
+            title: "הרשימות שלי",
+            color: themeColor,
+            homeBtn: false,
+          ),
         ),
-      ),
-      endDrawer: CustomDrawer(userName: _userName),
-      body: RefreshIndicator(
-          onRefresh: _refreshLists,
-          child: ListTitles(refreshLists: _refreshLists)),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            useSafeArea: true,
-            builder: (context) => BottomModalCreateList(
-              onListCreated: _refreshLists,
-            ),
-          )
-        },
-        backgroundColor: themeColor,
-        label: const Text(
-          "רשימה חדשה",
-          style: TextStyle(color: Colors.white),
-        ),
-        icon: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 32,
+        endDrawer: CustomDrawer(userName: name, refreshLists: _refreshLists),
+        body: RefreshIndicator(
+            onRefresh: _refreshLists,
+            child: ListTitles(refreshLists: _refreshLists)),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              useSafeArea: true,
+              builder: (context) => BottomModalCreateList(
+                  onListCreated: _refreshLists, name: name),
+            )
+          },
+          backgroundColor: themeColor,
+          label: const Text(
+            "רשימה חדשה",
+            style: TextStyle(color: Colors.white),
+          ),
+          icon: const Icon(
+            Icons.add,
+            color: Colors.white,
+            size: 32,
+          ),
         ),
       ),
     );

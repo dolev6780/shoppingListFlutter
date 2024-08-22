@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,8 +11,9 @@ import 'package:uuid/uuid.dart';
 
 class BottomModalCreateList extends StatefulWidget {
   final VoidCallback onListCreated;
-
-  const BottomModalCreateList({super.key, required this.onListCreated});
+  final String name;
+  const BottomModalCreateList(
+      {super.key, required this.onListCreated, required this.name});
 
   @override
   State<BottomModalCreateList> createState() => _BottomModalState();
@@ -20,7 +23,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
   final TextEditingController listTitle = TextEditingController();
   bool warning = false;
   Timer? _warningTimer;
-  final List<String> selectedUIDs = [];
+  final List<Map<String, String>> selectedUIDs = [];
 
   @override
   void dispose() {
@@ -33,7 +36,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
     final User? user = Provider.of<User?>(context, listen: false);
     final String email = user?.email ?? "";
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    selectedUIDs.add(user!.uid);
+    selectedUIDs.add({'id': user!.uid, 'name': widget.name});
     // Prepare the list data
     var day = DateTime.now().day < 10
         ? "0${DateTime.now().day}"
@@ -44,7 +47,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
     var date = "$day/$month/${DateTime.now().year}";
 
     final docData = {
-      "creator": email,
+      "creator": widget.name,
       "title": listTitle.text,
       "list": [],
       "date": date,
@@ -57,22 +60,24 @@ class _BottomModalState extends State<BottomModalCreateList> {
     if (email.isNotEmpty && listTitle.text.isNotEmpty) {
       try {
         // Create the list for each selected user
-        for (var uid in selectedUIDs) {
+        for (var uidMap in selectedUIDs) {
+          String uid = uidMap['id']!;
+          DocumentReference userDocRef;
           if (uid != user.uid) {
-            final DocumentReference otherUserDocRef = firestore
+            userDocRef = firestore
                 .collection("users")
                 .doc(uid)
                 .collection("pendingLists")
                 .doc();
-            await otherUserDocRef.set(docData);
           } else {
-            final DocumentReference otherUserDocRef = firestore
+            userDocRef = firestore
                 .collection("users")
                 .doc(uid)
                 .collection("lists")
                 .doc();
-            await otherUserDocRef.set(docData);
           }
+
+          await userDocRef.set(docData);
         }
         Navigator.pop(context);
         widget.onListCreated();

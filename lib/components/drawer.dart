@@ -12,8 +12,8 @@ import '../services/auth_service.dart';
 class CustomDrawer extends StatelessWidget {
   final AuthService _authService = AuthService();
   final String userName;
-
-  CustomDrawer({super.key, required this.userName});
+  final Future<void> Function() refreshLists;
+  CustomDrawer({super.key, required this.userName, required this.refreshLists});
 
   Future<void> _signOut(BuildContext context) async {
     await _authService.signOut();
@@ -77,10 +77,7 @@ class CustomDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      name.isNotEmpty
-                          ? name
-                          : user!.email.toString()[0].toUpperCase() +
-                              user.email.toString().substring(1),
+                      name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
@@ -99,7 +96,7 @@ class CustomDrawer extends StatelessWidget {
                             context,
                             MaterialPageRoute<void>(
                               builder: (BuildContext context) =>
-                                  const FinishedListsScreen(),
+                                  FinishedListsScreen(),
                             ),
                           );
                         },
@@ -250,7 +247,7 @@ class CustomDrawer extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: Text(
-                "copyright 2023",
+                "C.A.I Software Solutions Corporation",
               ),
             ),
           ],

@@ -1,7 +1,10 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shoppinglist/screens/my_connections_screen.dart';
 import 'package:shoppinglist/services/theme_provider.dart';
 
 class BottomModalAddConnection extends StatefulWidget {
@@ -12,19 +15,19 @@ class BottomModalAddConnection extends StatefulWidget {
 }
 
 class _BottomModalState extends State<BottomModalAddConnection> {
-  final TextEditingController connectionIdController = TextEditingController();
+  final TextEditingController displayNameController = TextEditingController();
   Map<String, dynamic>? foundUser;
   String? foundUserId;
   Map<String, dynamic>? currentUser;
 
-  Future<void> searchUserByConnectionId(String connectionId) async {
+  Future<void> searchUserByConnectionId(String displayName) async {
     try {
       final FirebaseFirestore firestore = FirebaseFirestore.instance;
       final User? user = Provider.of<User?>(context, listen: false);
       /////found user query
       final QuerySnapshot querySnapshot = await firestore
           .collection('users')
-          .where('connectId', isEqualTo: connectionId)
+          .where('displayName', isEqualTo: displayName)
           .get();
       //get found user
       if (querySnapshot.docs.isNotEmpty) {
@@ -38,7 +41,11 @@ class _BottomModalState extends State<BottomModalAddConnection> {
           foundUser = null;
           foundUserId = null;
         });
-        print('No user found with connectionId $connectionId');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No user found with connectionId $displayName'),
+          ),
+        );
       }
       /////current user query
       DocumentSnapshot currUserDoc =
@@ -53,10 +60,18 @@ class _BottomModalState extends State<BottomModalAddConnection> {
           foundUser = null;
           foundUserId = null;
         });
-        print('No user found with connectionId $connectionId');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('No user found with connectionId $displayName'),
+          ),
+        );
       }
     } catch (e) {
-      print('Error searching user by connectionId: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error searching user by connectionId: $displayName'),
+        ),
+      );
       setState(() {
         foundUser = null;
         foundUserId = null;
@@ -118,6 +133,12 @@ class _BottomModalState extends State<BottomModalAddConnection> {
           backgroundColor: Colors.green,
         ),
       );
+      Navigator.push(
+        context,
+        MaterialPageRoute<void>(
+          builder: (BuildContext context) => const MyConnectionsScreen(),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -142,7 +163,7 @@ class _BottomModalState extends State<BottomModalAddConnection> {
       child: Container(
         padding: const EdgeInsets.all(16.0),
         width: double.infinity,
-        height: isKeyboardVisible ? screenHeight / 2 + 100 : null,
+        height: isKeyboardVisible ? screenHeight / 2 + 150 : null,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -167,7 +188,7 @@ class _BottomModalState extends State<BottomModalAddConnection> {
                   child: Directionality(
                     textDirection: TextDirection.rtl,
                     child: TextField(
-                      controller: connectionIdController,
+                      controller: displayNameController,
                       decoration: InputDecoration(
                         hintText: "מזהה איש קשר",
                         hintStyle: TextStyle(
@@ -191,7 +212,7 @@ class _BottomModalState extends State<BottomModalAddConnection> {
             Row(
               children: [
                 TextButton(
-                  onPressed: () => {connectionIdController.clear()},
+                  onPressed: () => {displayNameController.clear()},
                   child: Text(
                     'נקה',
                     style: TextStyle(
@@ -200,12 +221,10 @@ class _BottomModalState extends State<BottomModalAddConnection> {
                 ),
                 TextButton(
                   onPressed: () async {
-                    final connectionId = connectionIdController.text.trim();
-                    if (connectionId.isNotEmpty) {
-                      await searchUserByConnectionId(connectionId);
-                    } else {
-                      print('Please enter a connection ID');
-                    }
+                    final dislayName = displayNameController.text.trim();
+                    if (dislayName.isNotEmpty) {
+                      await searchUserByConnectionId(dislayName);
+                    } else {}
                   },
                   child: Text(
                     'חפש',
@@ -255,7 +274,7 @@ class _BottomModalState extends State<BottomModalAddConnection> {
                       ),
                     )
                   : const Text("המזהה הוא שלך"),
-            if (foundUser == null && connectionIdController.text.isNotEmpty)
+            if (foundUser == null && displayNameController.text.isNotEmpty)
               const Padding(
                 padding: EdgeInsets.all(16.0),
                 child: Text(

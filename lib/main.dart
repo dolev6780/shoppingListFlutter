@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shoppinglist/services/auth_provider.dart';
 import 'package:shoppinglist/services/theme_provider.dart';
-import 'package:shoppinglist/services/wrapper.dart';
+import 'package:shoppinglist/services/wrapper_file.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -38,7 +38,9 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key});
+  const MyApp({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {

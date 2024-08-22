@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -30,8 +32,20 @@ class _BottomModalState extends State<BottomModalCreateItem> {
   Timer? _warningTimer;
 
   void updateItemsInList() async {
-    Provider.of<User?>(context, listen: false);
+    List<dynamic> sharedWith = widget.sharedWith;
+    List<String> ids = sharedWith
+        .where((item) => item is Map<String, dynamic> && item['id'] is String)
+        .map((item) => item['id'] as String)
+        .toList();
+
+    final User? user = Provider.of<User?>(context, listen: false);
+    final String? name = widget.sharedWith
+        .where((item) => item is Map<String, dynamic> && item['id'] is String)
+        .cast<Map<String, dynamic>>()
+        .firstWhere((item) => item['id'] == user!.uid,
+            orElse: () => {})['name'];
     var time = "${DateTime.now().hour + 3}:${DateTime.now().minute}";
+
     try {
       if (listItem.text.isEmpty) {
         setState(() {
@@ -46,7 +60,7 @@ class _BottomModalState extends State<BottomModalCreateItem> {
         return;
       }
       var docRef = FirebaseFirestore.instance.collection('users');
-      List<String> sharedWithUsers = List<String>.from(widget.sharedWith);
+      List<String> sharedWithUsers = List<String>.from(ids);
       for (String sharedUserId in sharedWithUsers) {
         // Query and update documents in 'lists' collection
         final QuerySnapshot listsSnapshot = await docRef
@@ -54,12 +68,16 @@ class _BottomModalState extends State<BottomModalCreateItem> {
             .collection("lists")
             .where("listId", isEqualTo: widget.listId)
             .get();
-
         for (var doc in listsSnapshot.docs) {
           final data = doc.data() as Map<String, dynamic>?;
           if (data != null) {
             List<dynamic> list = data['list'] ?? [];
-            list.add({'item': listItem.text, 'time': time, 'checked': false});
+            list.add({
+              'item': listItem.text,
+              'time': time,
+              'checked': false,
+              'creator': name
+            });
             await doc.reference.update({'list': list});
           }
         }
@@ -75,7 +93,12 @@ class _BottomModalState extends State<BottomModalCreateItem> {
           final data = doc.data() as Map<String, dynamic>?;
           if (data != null) {
             List<dynamic> list = data['list'] ?? [];
-            list.add({'item': listItem.text, 'time': time, 'checked': false});
+            list.add({
+              'item': listItem.text,
+              'time': time,
+              'checked': false,
+              'creator': name
+            });
             await doc.reference.update({'list': list});
           }
         }
@@ -84,7 +107,11 @@ class _BottomModalState extends State<BottomModalCreateItem> {
       listItem.text = "";
       Navigator.pop(context, 'OK');
     } catch (e) {
-      print('Error updating subcollection field: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error updating subcollection field'),
+        ),
+      );
     }
   }
 
@@ -94,6 +121,7 @@ class _BottomModalState extends State<BottomModalCreateItem> {
     double screenHeight = MediaQuery.of(context).size.height;
 
     Color selectedColor = widget.color;
+
     return GestureDetector(
       child: Container(
         padding: const EdgeInsets.all(16.0),

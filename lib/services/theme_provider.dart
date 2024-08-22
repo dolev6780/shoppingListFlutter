@@ -43,7 +43,7 @@ class ThemeProvider with ChangeNotifier {
       }
     } catch (e) {
       // Handle errors
-      print("Error saving theme mode: $e");
+      debugPrint("Error saving theme mode: $e");
     }
   }
 
@@ -60,7 +60,7 @@ class ThemeProvider with ChangeNotifier {
       }
     } catch (e) {
       // Handle errors
-      print("Error saving theme color: $e");
+      debugPrint("Error saving theme color: $e");
     }
   }
 
@@ -88,7 +88,7 @@ class ThemeProvider with ChangeNotifier {
       }
     } catch (e) {
       // Handle errors
-      print("Error loading theme color and mode: $e");
+      debugPrint("Error loading theme color and mode: $e");
     }
   }
 }

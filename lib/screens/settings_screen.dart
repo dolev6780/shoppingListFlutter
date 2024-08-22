@@ -27,7 +27,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     const Color.fromARGB(255, 14, 196, 154),
   ];
   Color _currentColor = const Color.fromARGB(255, 20, 67, 117);
-  bool _expanded = false;
   bool _nightMode = false;
 
   @override
@@ -65,6 +64,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  void _showColorPickerDialog() {
+    Color tempColor = _currentColor;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('בחר צבע ערכת נושא',
+              textDirection: TextDirection.rtl, style: TextStyle(fontSize: 20)),
+          content: SingleChildScrollView(
+            child: Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: _colors.map((color) {
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _currentColor = color;
+                    });
+                    Provider.of<ThemeProvider>(context, listen: false)
+                        .setThemeColor(color);
+                  },
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: _currentColor == color
+                          ? Border.all(color: Colors.black, width: 2.0)
+                          : null,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => {
+                setState(() {
+                  _currentColor = tempColor;
+                }),
+                Provider.of<ThemeProvider>(context, listen: false)
+                    .setThemeColor(_currentColor),
+                Navigator.pop(context),
+              },
+              child: const Text(
+                'ביטול',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'אישור',
+                style: TextStyle(color: Colors.white),
+              ),
+            )
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -81,8 +144,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Appbar(
           title: "הגדרות",
-          backBtn: true,
           color: themeColor,
+          homeBtn: true,
         ),
       ),
       body: Padding(
@@ -161,74 +224,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 10),
             const Text("תצוגה",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 6),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _expanded = !_expanded;
-                      });
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                      width: _expanded ? 220.0 : 24.0,
-                      height: 50,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Expanded(
-                            child: ListView(
-                              scrollDirection: Axis.horizontal,
-                              children: List.generate(_colors.length, (index) {
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _currentColor = _colors[index];
-                                    });
-                                    themeProvider.setThemeColor(_colors[index]);
-                                  },
-                                  child: Container(
-                                    width: 20,
-                                    height: 20,
-                                    margin: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: _colors[index],
-                                      shape: BoxShape.circle,
-                                      border: _currentColor == _colors[index]
-                                          ? Border.all(
-                                              color: Colors.black, width: 2.0)
-                                          : null,
-                                    ),
-                                  ),
-                                );
-                              }),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _expanded = !_expanded;
-                              });
-                            },
-                            child: !_expanded
-                                ? Container(
-                                    width: 20,
-                                    height: 20,
-                                    decoration: BoxDecoration(
-                                      color: themeColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.close,
-                                    color: _currentColor,
-                                  ),
-                          ),
-                        ],
+                GestureDetector(
+                  onTap: _showColorPickerDialog,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Container(
+                      width: 25,
+                      height: 25,
+                      decoration: BoxDecoration(
+                        color: themeColor,
+                        shape: BoxShape.circle,
                       ),
                     ),
                   ),
@@ -237,11 +246,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     const Text(
                       "בחר צבע ערכת נושא",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                     ),
-                    const SizedBox(
-                      width: 10,
-                    ),
+                    const SizedBox(width: 10),
                     Icon(
                       Icons.sunny,
                       color: themeColor,
@@ -250,9 +258,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ],
             ),
-            const SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -272,7 +278,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     const Text(
                       "מצב לילה",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                     const SizedBox(
                       width: 10,
@@ -297,18 +304,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute<void>(
-                      builder: (BuildContext context) => const Privacy(),
+                      builder: (BuildContext context) =>
+                          const PrivacyPolicyScreen(),
                     ),
                   );
                 },
-                title: const Text("פרטיות"),
+                title: const Text(
+                  "פרטיות",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
               ),
             ),
             const Directionality(
               textDirection: TextDirection.rtl,
               child: ListTile(
-                title: Text("גירסה"),
-                subtitle: Text("1.0"),
+                title: Text(
+                  "גירסה",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+                subtitle: Text(
+                  "1.0",
+                  style: TextStyle(fontSize: 10),
+                ),
               ),
             )
           ],

@@ -14,75 +14,92 @@ class OverlapCircleAvatars extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 200,
-      height: 20,
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          icon: const SizedBox(),
-          menuMaxHeight: 250,
-          isExpanded: true,
-          items: users.map((String user) {
-            return DropdownMenuItem<String>(
-              value: user,
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
+      height: 40,
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: PopupMenuButton<String>(
+              tooltip: "הראה תפריט",
+              icon: SizedBox(
+                width: 30,
+                height: 20,
+                child: Stack(
                   children: [
-                    CircleAvatar(
-                      radius: 10,
-                      backgroundColor: getRandomColor(),
-                      child: Text(
-                        user.substring(0, 1).toUpperCase(),
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold),
+                    for (int i = 0;
+                        i < (users.length > 2 ? 2 : users.length);
+                        i++)
+                      Positioned(
+                        right: 8.0 * i,
+                        child: CircleAvatar(
+                          backgroundColor: getRandomColor(),
+                          radius: 10,
+                          child: Text(
+                            users[i].substring(0, 1).toUpperCase(),
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(user),
-                    ),
                   ],
                 ),
               ),
-            );
-          }).toList(),
-          onChanged: (String? newValue) {
-            // Handle action if needed when user selects a name
-          },
-          hint: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.5,
-            child: Stack(
-              children: [
-                for (int i = 0; i < (users.length > 3 ? 3 : users.length); i++)
-                  Positioned(
-                    right: 10.0 * i,
-                    child: CircleAvatar(
-                      backgroundColor: getRandomColor(),
-                      radius: 10,
-                      child: Text(
-                        users[i].substring(0, 1).toUpperCase(),
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold),
+              padding: EdgeInsets.zero,
+              onSelected: (String value) {
+                // Handle selection
+              },
+              itemBuilder: (BuildContext context) {
+                return [
+                  PopupMenuItem<String>(
+                    enabled: false,
+                    padding: EdgeInsets.zero,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxHeight: 200,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: users.map((String user) {
+                            return PopupMenuItem<String>(
+                              value: user,
+                              child: Directionality(
+                                textDirection: TextDirection.rtl,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 10,
+                                      backgroundColor: getRandomColor(),
+                                      child: Text(
+                                        user.substring(0, 1).toUpperCase(),
+                                        style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(user),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ),
-                if (users.length > 3)
-                  Positioned(
-                    right: 30.0,
-                    child: CircleAvatar(
-                      backgroundColor: getRandomColor(),
-                      radius: 10,
-                      child: Text(
-                        '+${users.length - 3}',
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-              ],
+                ];
+              },
+              offset: const Offset(0, 50),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

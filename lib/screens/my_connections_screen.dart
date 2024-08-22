@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shoppinglist/components/app_bar.dart';
 import 'package:shoppinglist/components/bottom_modal_add_connection.dart';
-import 'package:shoppinglist/services/connection_service.dart';
+import 'package:shoppinglist/services/data_service.dart';
 import 'package:shoppinglist/services/theme_provider.dart';
 
 class MyConnectionsScreen extends StatefulWidget {
@@ -12,11 +13,11 @@ class MyConnectionsScreen extends StatefulWidget {
 }
 
 class _MyConnectionsScreenState extends State<MyConnectionsScreen> {
-  final ConnectionService connectionService = ConnectionService();
+  final DataService dataService = DataService();
 
   Future<void> _refreshConnections() async {
     // Call the method to fetch connections
-    await connectionService.fetchConnections();
+    await dataService.fetchConnections();
     // Refresh state after fetching connections
     setState(() {});
   }
@@ -27,21 +28,18 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen> {
     Color textColor = Colors.white;
 
     return Scaffold(
-      appBar: AppBar(
-        flexibleSpace: Container(
-          decoration: BoxDecoration(color: themeColor),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Appbar(
+          title: "אנשי הקשר שלי",
+          color: themeColor,
+          homeBtn: true,
         ),
-        title: Text(
-          'אנשי הקשר שלי',
-          style: TextStyle(color: textColor),
-        ),
-        centerTitle: true,
-        iconTheme: IconThemeData(color: textColor),
       ),
       body: RefreshIndicator(
         onRefresh: _refreshConnections,
         child: FutureBuilder<List<Map<String, dynamic>>>(
-          future: connectionService.fetchConnections(),
+          future: dataService.fetchConnections(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
@@ -61,66 +59,65 @@ class _MyConnectionsScreenState extends State<MyConnectionsScreen> {
                         textDirection: TextDirection.rtl,
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: themeColor,
-                              child: Text(
-                                connection['name'][0].toString().toUpperCase(),
-                                style: TextStyle(color: textColor),
+                          child: Card.outlined(
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: themeColor,
+                                child: Text(
+                                  connection['name'][0]
+                                      .toString()
+                                      .toUpperCase(),
+                                  style: TextStyle(color: textColor),
+                                ),
                               ),
-                            ),
-                            title: Text(
-                              connection['name'],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
+                              title: Text(
+                                connection['name'],
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            trailing: IconButton(
-                              icon: Icon(Icons.delete, color: themeColor),
-                              onPressed: () async {
-                                bool? confirmDelete = await showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('מחיקת איש קשר'),
-                                    content: const Text(
-                                        'האם אתה בטוח שתרצה למחוק את האיש קשר?'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: Text(
-                                          'בטל',
-                                          style: TextStyle(color: themeColor),
+                              trailing: IconButton(
+                                icon: Icon(Icons.delete, color: themeColor),
+                                onPressed: () async {
+                                  bool? confirmDelete = await showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('מחיקת איש קשר'),
+                                      content: const Text(
+                                          'האם אתה בטוח שתרצה למחוק את האיש קשר?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
+                                          child: Text(
+                                            'בטל',
+                                            style: TextStyle(color: themeColor),
+                                          ),
                                         ),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child: Text(
-                                          'אשר',
-                                          style: TextStyle(color: themeColor),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
+                                          child: Text(
+                                            'אשר',
+                                            style: TextStyle(color: themeColor),
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                );
+                                      ],
+                                    ),
+                                  );
 
-                                if (confirmDelete == true) {
-                                  await connectionService
-                                      .deleteConnection(connection['id']);
-                                  // Refresh connections after deletion
-                                  _refreshConnections();
-                                }
-                              },
+                                  if (confirmDelete == true) {
+                                    await dataService
+                                        .deleteConnection(connection['id']);
+                                    // Refresh connections after deletion
+                                    _refreshConnections();
+                                  }
+                                },
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      Divider(
-                        endIndent: 20,
-                        indent: 20,
-                        color: themeColor,
-                      )
                     ],
                   );
                 },
