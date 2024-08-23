@@ -1,10 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shoppinglist/components/app_bar.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shoppinglist/screens/privacy.dart';
+import 'package:shoppinglist/screens/privacy_screen.dart';
+import 'package:shoppinglist/services/auth_provider.dart';
 import 'package:shoppinglist/services/theme_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -15,8 +15,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  String _userName = "";
-  String _connectId = "";
+  final String _connectId = "";
   final List<Color> _colors = [
     const Color.fromARGB(255, 20, 67, 117),
     Colors.red,
@@ -32,29 +31,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _getName();
+
     _loadNightModeSetting();
-  }
-
-  Future<void> _getName() async {
-    try {
-      final FirebaseFirestore firestore = FirebaseFirestore.instance;
-      final User? user = Provider.of<User?>(context, listen: false);
-
-      if (user != null) {
-        final DocumentSnapshot documentSnapshot =
-            await firestore.collection('users').doc(user.uid).get();
-
-        if (documentSnapshot.exists) {
-          setState(() {
-            _userName = documentSnapshot['displayName'];
-            _connectId = documentSnapshot['connectId'];
-          });
-        }
-      }
-    } catch (e) {
-      // Handle error (e.g., show an error message)
-    }
   }
 
   void _loadNightModeSetting() {
@@ -132,12 +110,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final User? user = Provider.of<User?>(context);
-    String name = _userName;
+
     Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
 
-    if (name.isNotEmpty) {
-      name = name[0].toUpperCase() + name.substring(1);
-    }
+    String? displayName = context.watch<AuthProviding>().displayName;
 
     return Scaffold(
       appBar: PreferredSize(
@@ -165,8 +141,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       maxRadius: 40,
                       backgroundColor: themeColor,
                       child: Text(
-                        name.isNotEmpty
-                            ? name[0].toUpperCase()
+                        displayName!.isNotEmpty
+                            ? displayName[0].toUpperCase()
                             : user?.email?.toString()[0].toUpperCase() ?? '',
                         style: const TextStyle(
                           fontSize: 32,
@@ -184,7 +160,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: Column(
                 children: [
                   Text(
-                    name,
+                    displayName,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                     ),

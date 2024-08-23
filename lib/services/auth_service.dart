@@ -75,7 +75,6 @@ class AuthService {
       bool existUser =
           await doesUserExist('email', currentUser!.email.toString());
       if (existUser) {
-        print("exist");
         return;
       }
       final DocumentReference newDocRef = collectionRef.doc(userId);
@@ -196,5 +195,20 @@ class AuthService {
         ],
       ),
     );
+  }
+
+  Future<bool> doesUserNameExist(String userName) async {
+    // Reference to the Firestore collection
+    CollectionReference collectionRef =
+        FirebaseFirestore.instance.collection('users');
+
+    // Query to check if any document contains the specified username
+    QuerySnapshot querySnapshot = await collectionRef
+        .where('displayName', isEqualTo: userName)
+        .limit(1)
+        .get();
+
+    // Check if any documents were returned by the query
+    return querySnapshot.docs.isNotEmpty;
   }
 }

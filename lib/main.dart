@@ -13,10 +13,8 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Create an instance of ThemeProvider to load the theme color
   final themeProvider = ThemeProvider();
-  await themeProvider
-      .loadThemeColorAndMode(); // Load theme color before app starts
+  await themeProvider.loadThemeColorAndMode();
 
   runApp(
     MultiProvider(
@@ -38,9 +36,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({
-    super.key,
-  });
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {

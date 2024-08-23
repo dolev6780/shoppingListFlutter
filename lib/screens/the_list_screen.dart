@@ -138,7 +138,6 @@ class _TheListScreenState extends State<TheListScreen> {
           final data = doc.data() as Map<String, dynamic>?;
           if (data != null) {
             await doc.reference.update({'finished': true});
-            ;
           }
         }
 
@@ -153,7 +152,6 @@ class _TheListScreenState extends State<TheListScreen> {
           final data = doc.data() as Map<String, dynamic>?;
           if (data != null) {
             await doc.reference.update({'finished': true});
-            ;
           }
         }
         ScaffoldMessenger.of(context).showSnackBar(

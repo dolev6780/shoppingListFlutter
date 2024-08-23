@@ -6,6 +6,7 @@ import 'package:shoppinglist/components/bottom_modal_create_list.dart';
 import 'package:shoppinglist/components/drawer.dart';
 import 'package:shoppinglist/components/list_titles.dart';
 import 'package:shoppinglist/screens/signin_screen.dart';
+import 'package:shoppinglist/services/auth_provider.dart';
 import 'package:shoppinglist/services/theme_provider.dart';
 import '../components/app_bar.dart';
 
@@ -19,12 +20,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   // ignore: unused_field
   List<String> _titles = [];
-  String _userName = "";
   @override
   void initState() {
     super.initState();
     _refreshLists();
-    _getName();
   }
 
   Future<void> _refreshLists() async {
@@ -61,47 +60,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _getName() async {
-    try {
-      final FirebaseFirestore firestore = FirebaseFirestore.instance;
-      final User? user = Provider.of<User?>(context, listen: false);
-
-      if (user != null) {
-        final DocumentSnapshot documentSnapshot =
-            await firestore.collection('users').doc(user.uid).get();
-
-        if (documentSnapshot.exists) {
-          if (mounted) {
-            setState(() {
-              _userName = documentSnapshot['displayName'];
-            });
-          }
-        } else {
-          _userName = "unknown";
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('no user found'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
     if (user == null) {
       return const SignInScreen();
     }
-    String name = _userName;
-    if (name.isNotEmpty) {
-      name = name[0].toUpperCase() + name.substring(1);
-    }
+    String? displayName = context.watch<AuthProviding>().displayName;
+
     Color themeColor = Provider.of<ThemeProvider>(context).themeColor;
     return PopScope(
       child: Scaffold(
@@ -113,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
             homeBtn: false,
           ),
         ),
-        endDrawer: CustomDrawer(userName: name, refreshLists: _refreshLists),
+        endDrawer: CustomDrawer(refreshLists: _refreshLists),
         body: RefreshIndicator(
             onRefresh: _refreshLists,
             child: ListTitles(refreshLists: _refreshLists)),
@@ -125,7 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
               isScrollControlled: true,
               useSafeArea: true,
               builder: (context) => BottomModalCreateList(
-                  onListCreated: _refreshLists, name: name),
+                  onListCreated: _refreshLists,
+                  displayName: displayName.toString()),
             )
           },
           backgroundColor: themeColor,

@@ -93,7 +93,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 color: Colors.white,
                               ),
                             ),
-                            hintText: "שם מלא",
+                            hintText: "שם משתמש",
                             hintStyle: const TextStyle(color: Colors.white),
                             border: InputBorder.none,
                             enabledBorder: OutlineInputBorder(
@@ -208,11 +208,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             });
 
                             try {
-                              await _authService.signUpWithEmailAndPassword(
-                                  context,
-                                  _email,
-                                  _passwordController.text,
-                                  _name);
+                              // Check if the username is unique
+                              bool isUserNameTaken =
+                                  await _authService.doesUserNameExist(_name);
+                              if (isUserNameTaken) {
+                                _showAlert(
+                                    "User name already exists. Please choose a different one.");
+                              } else {
+                                await _authService.signUpWithEmailAndPassword(
+                                    context,
+                                    _email,
+                                    _passwordController.text,
+                                    _name);
+                              }
                             } catch (e) {
                               _showAlert(
                                   "An error occurred. Please try again.");

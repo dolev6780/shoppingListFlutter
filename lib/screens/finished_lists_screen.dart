@@ -34,7 +34,7 @@ class _FinishedListsScreenState extends State<FinishedListsScreen> {
           .map((doc) => doc.data() as Map<String, dynamic>)
           .toList();
     } catch (e) {
-      print('Error fetching finished lists: $e');
+      //print('Error fetching finished lists: $e');
       return [];
     }
   }
@@ -82,7 +82,57 @@ class _FinishedListsScreenState extends State<FinishedListsScreen> {
                   textDirection: TextDirection.rtl,
                   child: Card(
                     child: ExpansionTile(
-                      leading: const Icon(Icons.more_vert),
+                      leading: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PopupMenuButton<String>(
+                            tooltip: "הראה תפריט",
+                            position: PopupMenuPosition.under,
+                            onSelected: (String result) async {
+                              if (result == 'delete') {
+                                // await dataService.deleteList(docId);
+                                // refreshLists();
+                              }
+                              if (result == 'duplicate') {}
+                            },
+                            itemBuilder: (BuildContext context) => [
+                              PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Icon(Icons.delete_forever,
+                                          color: themeColor),
+                                      const Text("מחק רשימה לצמיתות"),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'duplicate',
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.only(left: 8, right: 8),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Icon(Icons.file_copy, color: themeColor),
+                                      const Text("שכפל רשימה"),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                            icon: Icon(Icons.more_vert, color: themeColor),
+                          ),
+                          const Icon(Icons.list, size: 32),
+                        ],
+                      ),
                       title: ListTile(
                         title: Text(list['title'] ?? 'No Title'),
                         subtitle: Text('יוצר רשימה: ${list['creator'] ?? ''}'),

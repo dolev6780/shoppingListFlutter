@@ -11,9 +11,9 @@ import 'package:uuid/uuid.dart';
 
 class BottomModalCreateList extends StatefulWidget {
   final VoidCallback onListCreated;
-  final String name;
+  final String displayName;
   const BottomModalCreateList(
-      {super.key, required this.onListCreated, required this.name});
+      {super.key, required this.onListCreated, required this.displayName});
 
   @override
   State<BottomModalCreateList> createState() => _BottomModalState();
@@ -36,7 +36,8 @@ class _BottomModalState extends State<BottomModalCreateList> {
     final User? user = Provider.of<User?>(context, listen: false);
     final String email = user?.email ?? "";
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-    selectedUIDs.add({'id': user!.uid, 'name': widget.name});
+
+    selectedUIDs.add({'id': user!.uid, 'name': widget.displayName});
     // Prepare the list data
     var day = DateTime.now().day < 10
         ? "0${DateTime.now().day}"
@@ -47,7 +48,7 @@ class _BottomModalState extends State<BottomModalCreateList> {
     var date = "$day/$month/${DateTime.now().year}";
 
     final docData = {
-      "creator": widget.name,
+      "creator": widget.displayName,
       "title": listTitle.text,
       "list": [],
       "date": date,

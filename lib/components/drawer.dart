@@ -8,12 +8,13 @@ import 'package:shoppinglist/screens/settings_screen.dart';
 import 'package:shoppinglist/screens/signin_screen.dart';
 import 'package:shoppinglist/services/theme_provider.dart';
 import '../services/auth_service.dart';
+import 'package:shoppinglist/services/auth_provider.dart';
 
 class CustomDrawer extends StatelessWidget {
   final AuthService _authService = AuthService();
-  final String userName;
+
   final Future<void> Function() refreshLists;
-  CustomDrawer({super.key, required this.userName, required this.refreshLists});
+  CustomDrawer({super.key, required this.refreshLists});
 
   Future<void> _signOut(BuildContext context) async {
     await _authService.signOut();
@@ -34,11 +35,7 @@ class CustomDrawer extends StatelessWidget {
     final Color themeColor = themeProvider.themeColor;
     final bool isDarkMode = themeProvider.themeMode == ThemeMode.dark;
     final Color btnColor = isDarkMode ? Colors.white : Colors.black;
-    String name = userName;
-
-    if (name.isNotEmpty) {
-      name = name[0].toUpperCase() + name.substring(1);
-    }
+    String? displayName = context.watch<AuthProviding>().displayName;
 
     return Drawer(
       shape: const RoundedRectangleBorder(
@@ -64,8 +61,8 @@ class CustomDrawer extends StatelessWidget {
                         maxRadius: 30,
                         backgroundColor: themeColor,
                         child: Text(
-                          name.isNotEmpty
-                              ? name[0].toUpperCase()
+                          displayName!.isNotEmpty
+                              ? displayName[0].toUpperCase()
                               : user?.email.toString()[0].toUpperCase() ?? "",
                           style: const TextStyle(
                             fontSize: 24,
@@ -77,7 +74,7 @@ class CustomDrawer extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      name,
+                      displayName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
@@ -96,7 +93,7 @@ class CustomDrawer extends StatelessWidget {
                             context,
                             MaterialPageRoute<void>(
                               builder: (BuildContext context) =>
-                                  FinishedListsScreen(),
+                                  const FinishedListsScreen(),
                             ),
                           );
                         },
@@ -247,7 +244,7 @@ class CustomDrawer extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: Text(
-                "C.A.I Software Solutions Corporation",
+                "C.A.I Software Solutions",
               ),
             ),
           ],
