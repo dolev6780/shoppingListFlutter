@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shoppinglist/components/app_bar.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:shoppinglist/screens/privacy_screen.dart';
 import 'package:shoppinglist/services/auth_provider.dart';
 import 'package:shoppinglist/services/theme_provider.dart';
@@ -15,7 +14,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final String _connectId = "";
   final List<Color> _colors = [
     const Color.fromARGB(255, 20, 67, 117),
     Colors.red,
@@ -176,27 +174,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(height: 10),
             Divider(height: 1, indent: 50, endIndent: 50, color: themeColor),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                        onPressed: () {
-                          Share.share(_connectId);
-                        },
-                        icon: const Icon(Icons.share)),
-                    const Text(
-                      ":המזהה שלך",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    )
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Divider(height: 1, color: themeColor),
             const SizedBox(height: 10),
             const Text("תצוגה",
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),

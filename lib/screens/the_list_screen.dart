@@ -214,6 +214,13 @@ class _TheListScreenState extends State<TheListScreen> {
     }
   }
 
+  final GlobalKey _toolTipKey = GlobalKey();
+
+  void _showTooltip() {
+    final dynamic tooltip = _toolTipKey.currentState;
+    tooltip.ensureTooltipVisible();
+  }
+
   @override
   Widget build(BuildContext context) {
     List<dynamic> sharedWith = widget.item['sharedWith'];
@@ -307,13 +314,17 @@ class _TheListScreenState extends State<TheListScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   const SizedBox(width: 5),
-                                  Tooltip(
-                                    message: creator,
-                                    child: CircleAvatar(
-                                      radius: 15,
-                                      child: Text(
-                                        creator.substring(0, 1).toUpperCase(),
-                                        style: const TextStyle(fontSize: 12),
+                                  GestureDetector(
+                                    onTap: _showTooltip,
+                                    child: Tooltip(
+                                      message: creator,
+                                      key: _toolTipKey,
+                                      child: CircleAvatar(
+                                        radius: 15,
+                                        child: Text(
+                                          creator.substring(0, 1).toUpperCase(),
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
                                       ),
                                     ),
                                   ),
